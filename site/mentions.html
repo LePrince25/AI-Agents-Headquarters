@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mentions - LePrince WorkLand</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --ink: #3b382f;
+    --ink-doux: #7d7362;
+    --creme: #fbf6ea;
+    --ligne: rgba(59, 56, 47, .13);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(90% 55% at 50% 0%, #f4f9fd, transparent),
+      #e6f0f8;
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    width: min(860px, calc(100% - 40px));
+    margin: 0 auto;
+    padding: 34px 0 60px;
+  }
+  .retour {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border: 1px solid var(--ligne);
+    border-radius: 999px;
+    background: rgba(251, 246, 234, .92);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: .02em;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(70, 58, 38, .12);
+  }
+  .retour:hover { background: #fffdf7; }
+  header { margin: 26px 0 26px; }
+  .sur {
+    font-size: 10px;
+    font-weight: 680;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: #a4572f;
+  }
+  h1 {
+    margin: 8px 0 10px;
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    letter-spacing: -.03em;
+    line-height: 1.05;
+  }
+  .intro {
+    margin: 0;
+    max-width: 680px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink-doux);
+  }
+  .carte {
+    background: rgba(251, 246, 234, .92);
+    border: 1px solid var(--ligne);
+    border-radius: 16px;
+    box-shadow: 0 18px 44px rgba(70, 58, 38, .13);
+    padding: 8px 26px 22px;
+    margin-top: 22px;
+  }
+  h2 {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    margin: 26px 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--ligne);
+    font-size: 15px;
+    font-weight: 680;
+  }
+  h2 span {
+    font-size: 9.5px;
+    font-weight: 650;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink-doux);
+  }
+  .liste { list-style: none; margin: 0; padding: 0; }
+  .liste li {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) 104px 74px minmax(0, 1fr);
+    gap: 14px;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(59, 56, 47, .06);
+    font-size: 12px;
+  }
+  .liste li:last-child { border-bottom: 0; }
+  .titre { font-weight: 600; }
+  .auteur { font-size: 11px; font-weight: 600; color: var(--ink); }
+  .licence {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #4f8f5d;
+    white-space: nowrap;
+  }
+  .source {
+    font-size: 10.5px;
+    color: var(--ink-doux);
+    overflow-wrap: anywhere;
+    text-align: right;
+  }
+  .outil-ligne {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(59, 56, 47, .06);
+    font-size: 12px;
+  }
+  .outil-ligne:last-child { border-bottom: 0; }
+  .outil-ligne b { font-weight: 650; }
+  .outil-ligne span { font-size: 10.5px; color: var(--ink-doux); text-align: right; }
+  .idees { list-style: none; margin: 4px 0 0; padding: 0; }
+  .idees li {
+    display: flex;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(59, 56, 47, .06);
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--ink-doux);
+  }
+  .idees li:last-child { border-bottom: 0; }
+  .idees li::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    margin-top: 6px;
+    border-radius: 50%;
+    background: #b08145;
+  }
+  .idees b { color: var(--ink); font-weight: 650; }
+  .note-bas {
+    margin-top: 22px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--ink-doux);
+  }
+  .note-bas b { color: var(--ink); }
+  @media (max-width: 660px) {
+    .carte { padding: 6px 16px 16px; }
+    .liste li { grid-template-columns: minmax(0, 1fr) 78px; }
+    .auteur { grid-column: 1; grid-row: 2; }
+    .source { grid-column: 1 / -1; text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <a class="retour" href="./index.html">&larr; Retour à LePrince WorkLand</a>
+
+  <header>
+    <span class="sur">Crédits</span>
+    <h1>Mentions</h1>
+    <p class="intro">
+      Le QG utilise 23 modèles 3D sous licence <b>CC0 1.0</b>, téléchargés depuis Poly Pizza,
+      puis enregistrés dans le projet. Rien n'est chargé depuis un site externe au lancement.
+      Chaque modèle est crédité avec son auteur et sa licence.
+    </p>
+  </header>
+
+  <div class="carte">
+    <h2>Modèles 3D <span>23 modèles - CC0 1.0</span></h2>
+    <ul class="liste">
+      <li><span class="titre">Desk</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/6PbVkqPzEU</span></li>
+      <li><span class="titre">Desk Corner</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/LCfBX1FVJr</span></li>
+      <li><span class="titre">Desk Chair</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/CKSz6PB1vO</span></li>
+      <li><span class="titre">Office Chair</span><span class="auteur">Quaternius</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/UfKvrZBK6C</span></li>
+      <li><span class="titre">Potted Plant</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/23Dx9CC95C</span></li>
+      <li><span class="titre">Houseplant</span><span class="auteur">Quaternius</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/bfLOqIV5uP</span></li>
+      <li><span class="titre">Bookcase Closed Wide</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/dUd80gOqgO</span></li>
+      <li><span class="titre">Lounge Sofa</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/jMu2iCmGxU</span></li>
+      <li><span class="titre">Table Round Large</span><span class="auteur">Quaternius</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/eCnblJPsW8</span></li>
+      <li><span class="titre">Coffee Table</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/y4ZU5S7RuD</span></li>
+      <li><span class="titre">Computer Screen</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/V5Qo141OcB</span></li>
+      <li><span class="titre">Laptop</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/GnbwSUiVty</span></li>
+      <li><span class="titre">Rug Rectangle</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/k5oJLb49gw</span></li>
+      <li><span class="titre">Lamp Round Floor</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/8LiDIfXVLi</span></li>
+      <li><span class="titre">Kitchen Coffee Machine</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/jBUiOz36vs</span></li>
+      <li><span class="titre">Safe</span><span class="auteur">CreativeTrio</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/N4egHD2Vms</span></li>
+      <li><span class="titre">Easel Large Leaning</span><span class="auteur">reyshapes</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/DzrGZz1LRo</span></li>
+      <li><span class="titre">Crate</span><span class="auteur">Quaternius</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/3VGWnZPXmG</span></li>
+      <li><span class="titre">Bench</span><span class="auteur">Quaternius</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/jLxjFxFRpw</span></li>
+      <li><span class="titre">Television</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/9trLeWoBek</span></li>
+      <li><span class="titre">Wall Corkboard</span><span class="auteur">CreativeTrio</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/U8yQZ9l0HZ</span></li>
+      <li><span class="titre">Printer</span><span class="auteur">CreativeTrio</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/77K2TCL5Lz</span></li>
+      <li><span class="titre">Cup Tea</span><span class="auteur">Kenney</span><span class="licence">CC0 1.0</span><span class="source">poly.pizza/m/M2sVC8jbmi</span></li>
+    </ul>
+
+    <h2>Bibliothèque 3D <span>MIT</span></h2>
+    <div class="outil-ligne">
+      <b>Three.js r160</b>
+      <span>MIT - enregistrée localement dans site/vendor/three</span>
+    </div>
+
+    <h2>Idées reprises <span>Inspirations</span></h2>
+    <ul class="idees">
+      <li>
+        <span><b>L'île flottante en coupe.</b> L'idée d'un diorama posé dans le ciel vient des
+        scènes low-poly de Kenney et Quaternius sur Poly Pizza.</span>
+      </li>
+      <li>
+        <span><b>Les bâtiments sans toit.</b> Le principe de maisons ouvertes pour voir chaque
+        pièce d'un coup d'oeil vient des packs de décors low-poly du même style.</span>
+      </li>
+      <li>
+        <span><b>Les personnages et le mobilier simples.</b> Les volumes arrondis, les couleurs
+        crème et bois et les proportions viennent des packs CC0 de Poly Pizza.</span>
+      </li>
+      <li>
+        <span><b>La vue à la première personne.</b> ZQSD, la souris pour regarder et E pour
+        interagir suivent la convention classique des jeux d'exploration de bureau.</span>
+      </li>
+      <li>
+        <span><b>Le tableau des travaux et les notifications.</b> L'idée d'un bureau de direction
+        qui suit les tâches de l'équipe en direct vient des jeux de gestion.</span>
+      </li>
+      <li>
+        <span><b>Les figurants et les allées et venues.</b> Des personnages qui vaquent à leurs
+        occupations donnent vie à l'open space, une idée classique des jeux de simulation.</span>
+      </li>
+    </ul>
+  </div>
+
+  <p class="note-bas">
+    <b>Code.</b> Le code du QG est écrit pour ce projet. Aucune ligne de code n'est reprise.<br>
+    <b>Polices.</b> Polices système de l'ordinateur, aucun fichier externe.<br>
+    <b>Modèles.</b> Poly Pizza, licence CC0 1.0, auteurs et licences crédités ci-dessus.<br>
+    <b>Vie privée.</b> Tout tourne sur ton ordinateur. Aucun mot de passe ni aucune clé dans le code ou à l'écran.
+  </p>
+</div>
+</body>
+</html>

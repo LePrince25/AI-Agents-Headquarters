@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quartier Général — maquette 1</title>
+<link rel="stylesheet" href="./src/ui.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/controls/OrbitControls.js": "./vendor/OrbitControls.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div class="vignette"></div>
+<div id="labels"></div>
+
+<div class="hud">
+  <div class="hud-titre">
+    <h1>Le Quartier Général</h1>
+    <span class="st">Maquette 1</span>
+  </div>
+  <div class="hud-compteur">
+    <span><b>10</b> pôles</span>
+    <span><b>30</b> agents</span>
+    <span class="k-lime"><b>9</b> de fond</span>
+    <span class="k-ember"><b>14</b> en mission</span>
+  </div>
+  <div class="hud-droite">
+    <button class="btn btn-primaire" id="btn-entrer">J'entre</button>
+  </div>
+</div>
+
+<aside class="sidebar">
+  <h3>Pôles</h3>
+  <div id="liste-poles"></div>
+</aside>
+
+<aside class="panneau" id="panneau"></aside>
+
+<div class="survol" id="survol"></div>
+<div class="etape" id="etape"></div>
+
+<div class="aide">
+  <kbd>glisser</kbd> tourner · <kbd>molette</kbd> zoom · <kbd>clic</kbd> un pôle pour voler
+</div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

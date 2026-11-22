@@ -1,0 +1,1672 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le Quartier Général - maquette 1</title>
+<style>
+  @font-face {
+    font-family: 'Instrument Sans';
+    src: url('./maquettes/fonts/instrumentsans-latin.woff2') format('woff2');
+    font-weight: 400 700;
+    font-display: swap;
+  }
+
+  :root {
+    --ink: #3b382f;
+    --ink-doux: #7d7362;
+    --creme: #fbf6ea;
+    --ligne: rgba(59, 56, 47, .13);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: #dcecf7;
+    color: var(--ink);
+    font-family: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    outline: none;
+  }
+
+  .voile {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(120% 95% at 50% 42%, rgba(255, 248, 232, 0) 55%, rgba(104, 92, 70, .14) 100%);
+  }
+
+  #labels {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .lbl {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform, opacity;
+    transition: opacity .35s ease;
+  }
+
+  .carte-lieu {
+    display: flex;
+    align-items: stretch;
+    background: rgba(251, 246, 234, .95);
+    border: 1px solid var(--ligne);
+    border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(70, 58, 38, .18), 0 1px 0 rgba(255, 255, 255, .7) inset;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .carte-lieu .trait { width: 4px; }
+
+  .carte-lieu .texte { padding: 6px 11px 7px 9px; }
+
+  .carte-lieu .lieu {
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: .005em;
+    line-height: 1.15;
+  }
+
+  .carte-lieu .pole {
+    display: block;
+    margin-top: 2px;
+    font-size: 9.5px;
+    font-weight: 550;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--ink-doux);
+  }
+
+  .carte-agent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px 4px 8px;
+    border-radius: 999px;
+    background: rgba(251, 246, 234, .92);
+    border: 1px solid var(--ligne);
+    box-shadow: 0 6px 16px rgba(70, 58, 38, .16);
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .carte-agent i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex: none;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .65);
+  }
+
+  .carte-agent span.role {
+    font-weight: 450;
+    color: var(--ink-doux);
+  }
+
+  .hud-titre {
+    position: fixed;
+    top: 22px;
+    left: 22px;
+    padding: 13px 18px 14px;
+    background: rgba(251, 246, 234, .9);
+    border: 1px solid var(--ligne);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px rgba(70, 58, 38, .16);
+    backdrop-filter: blur(6px);
+  }
+
+  .hud-titre h1 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 680;
+    letter-spacing: -.015em;
+    line-height: 1.1;
+  }
+
+  .hud-titre .badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 8px 4px;
+    border-radius: 999px;
+    background: rgba(196, 115, 74, .13);
+    color: #a4572f;
+    font-size: 9.5px;
+    font-weight: 680;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+
+  .hud-titre p {
+    margin: 7px 0 0;
+    font-size: 11.5px;
+    color: var(--ink-doux);
+  }
+
+  .hud-stats {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    display: flex;
+    gap: 2px;
+    padding: 6px;
+    background: rgba(251, 246, 234, .9);
+    border: 1px solid var(--ligne);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(70, 58, 38, .14);
+    backdrop-filter: blur(6px);
+  }
+
+  .hud-stats div {
+    padding: 5px 11px;
+    font-size: 11px;
+    color: var(--ink-doux);
+    white-space: nowrap;
+  }
+
+  .hud-stats b {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-right: 3px;
+  }
+
+  .pied {
+    position: fixed;
+    left: 22px;
+    right: 22px;
+    bottom: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px;
+    pointer-events: none;
+  }
+
+  .legende {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 14px;
+    background: rgba(251, 246, 234, .9);
+    border: 1px solid var(--ligne);
+    border-radius: 999px;
+    box-shadow: 0 10px 26px rgba(70, 58, 38, .13);
+    backdrop-filter: blur(6px);
+    font-size: 10.5px;
+    color: var(--ink-doux);
+  }
+
+  .legende span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .legende i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+
+  .note {
+    padding: 7px 12px;
+    background: rgba(251, 246, 234, .82);
+    border: 1px solid var(--ligne);
+    border-radius: 9px;
+    font-size: 10px;
+    color: var(--ink-doux);
+    white-space: nowrap;
+    backdrop-filter: blur(6px);
+  }
+
+  @media (max-width: 720px) {
+    .hud-titre { top: 14px; left: 14px; padding: 10px 14px 11px; }
+    .hud-titre h1 { font-size: 16px; }
+    .hud-titre p { display: none; }
+    .hud-stats { top: 14px; right: 14px; }
+    .hud-stats div { padding: 4px 7px; font-size: 9.5px; }
+    .hud-stats b { font-size: 11px; }
+    .pied { left: 14px; right: 14px; bottom: 14px; }
+    .note { display: none; }
+    .legende { font-size: 9.5px; gap: 11px; padding: 7px 11px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./maquettes/vendor/three160/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+
+<canvas id="scene"></canvas>
+<div class="voile"></div>
+<div id="labels"></div>
+
+<header class="hud-titre">
+  <h1>Le Quartier Général</h1>
+  <span class="badge">Maquette 1</span>
+  <p>L'île, les 9 pôles, les lieux et l'équipe</p>
+</header>
+
+<div class="hud-stats">
+  <div><b>9</b>pôles</div>
+  <div><b>30</b>agents</div>
+  <div><b>9</b>lieux</div>
+</div>
+
+<div class="pied">
+  <div class="legende">
+    <span><i style="--c:#a98455"></i>Hibou - La Vigie</span>
+    <span><i style="--c:#8c6f4e"></i>Sanner - Le Bastion</span>
+  </div>
+  <div class="note">Vue statique - tout tourne en local - maquette 1</div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ---------------------------------------------------------------------------
+// Utilitaires
+// ---------------------------------------------------------------------------
+const PI = Math.PI;
+const TAU = PI * 2;
+
+function graine(seed) {
+  let t = seed >>> 0;
+  return function () {
+    t += 0x6D2B79F5;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const hasard = graine(20261121);
+
+const cacheMats = new Map();
+function mat(color, opts = {}) {
+  const cle = color + '|' + JSON.stringify(opts);
+  if (!cacheMats.has(cle)) {
+    cacheMats.set(cle, new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.86,
+      metalness: 0,
+      ...opts,
+    }));
+  }
+  return cacheMats.get(cle);
+}
+
+function box(w, h, d, color, x = 0, y = 0, z = 0, opts) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, opts));
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+function cyl(rt, rb, h, color, x = 0, y = 0, z = 0, seg = 16, opts) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(color, opts));
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  m.receiveShadow = true;
+  return m;
+}
+
+function plan(w, d, color, x = 0, y = 0, z = 0, opts) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(color, { ...opts }));
+  m.rotation.x = -PI / 2;
+  m.position.set(x, y, z);
+  m.receiveShadow = true;
+  return m;
+}
+
+// ---------------------------------------------------------------------------
+// Palette de l'île
+// ---------------------------------------------------------------------------
+const C = {
+  herbe: 0x8db55c,
+  sable: 0xe5d1a7,
+  sableOmbre: 0xcdb488,
+  pierre: 0xe9ddc4,
+  pierreClair: 0xf2e9d5,
+  pierreSombre: 0xd3c3a5,
+  dalle: 0xf5edde,
+  mur: 0xf7f0e2,
+  murOmbre: 0xe7dfcd,
+  bois: 0xcfa46c,
+  boisClair: 0xdfba89,
+  boisFonce: 0x9c7145,
+  terracotta: 0xc4734a,
+  argile: 0xb98a63,
+  verre: 0xb8dce7,
+  metal: 0x64686b,
+  metalClair: 0x8a8f92,
+  ecran: 0x3d454b,
+  ecranClair: 0xdceef1,
+  blanc: 0xfcf8ef,
+  tissu: 0xd9c9ae,
+  tapis: 0xd8c6a8,
+};
+
+// ---------------------------------------------------------------------------
+// Les 9 pôles et leurs agents (source : EQUIPE.md)
+// ---------------------------------------------------------------------------
+const POLES = [
+  {
+    id: 'api', pole: 'Pôle API', lieu: 'La Forge', angle: -90, accent: '#4f8b86',
+    kind: 'forge', sol: 0xe7dcc6,
+    agents: [
+      { nom: 'Noé Kamdem', poste: 'Architecte API', etat: 'mission' },
+      { nom: 'Iris Sossou', poste: 'Intégrations & Webhooks', etat: 'mission' },
+      { nom: 'Malo Akakpo', poste: 'Performance & Contrats', etat: 'repos' },
+      { nom: "Lior d'Almeida", poste: 'Développeur Connecteurs', etat: 'repos' },
+    ],
+  },
+  {
+    id: 'vitrines', pole: 'Sites Vitrines', lieu: "L'Atelier Owl", angle: -50, accent: '#c9763f',
+    kind: 'atelier', sol: 0xead9c2,
+    agents: [
+      { nom: 'Yasmine Alimi', poste: 'Directrice Artistique', etat: 'mission' },
+      { nom: 'Tom Ségal', poste: 'Frontend Vitrine', etat: 'mission' },
+      { nom: 'Émilie Kponou', poste: 'E-commerce & Contenu', etat: 'repos' },
+    ],
+  },
+  {
+    id: 'mobiles', pole: 'Apps Mobiles', lieu: "L'Usine Mobile", angle: -10, accent: '#c2a04a',
+    kind: 'mobile', sol: 0xe9dcc8,
+    agents: [
+      { nom: "Sacha N'Dri", poste: 'Lead Cross-platform', etat: 'mission' },
+      { nom: 'Maya Agbodjan', poste: 'Releases & Stores', etat: 'repos' },
+      { nom: 'Jo Nkpenza', poste: 'PWA & Synchronisation Offline', etat: 'mission' },
+    ],
+  },
+  {
+    id: 'saas', pole: 'SAAS & CRM', lieu: 'Le Comptoir', angle: 30, accent: '#8d9a4c',
+    kind: 'comptoir', sol: 0xe6dcc3,
+    agents: [
+      { nom: 'Alex Koffi', poste: 'Architecte SaaS Multi-tenant', etat: 'fond' },
+      { nom: 'Sadio Touré', poste: 'CRM & Workflows', etat: 'mission' },
+      { nom: 'Nour Diallo', poste: 'Facturation & Abonnements', etat: 'mission' },
+      { nom: 'Rachid Ouro-Sama', poste: 'Schéma & Migrations', etat: 'repos' },
+    ],
+  },
+  {
+    id: 'cyber', pole: 'CyberSécurité', lieu: 'Le Bastion', angle: 70, accent: '#a65a4f',
+    kind: 'bastion', sol: 0xe7d8c4,
+    agents: [
+      { nom: 'Yao Mensah', poste: 'Auditeur & Supply Chain', etat: 'fond' },
+      { nom: 'Rina Adjo', poste: 'Pentestrice', etat: 'mission' },
+      { nom: 'Théo Bessou', poste: 'Correcteur & Durcissement', etat: 'mission' },
+      { nom: 'Fatou Sy', poste: 'Threat Modeling & CVE', etat: 'fond' },
+    ],
+  },
+  {
+    id: 'veille', pole: 'Veille & R&D', lieu: 'La Vigie', angle: 110, accent: '#6f8f5f',
+    kind: 'vigie', sol: 0xe8ddc6,
+    agents: [
+      { nom: 'Kévin Eku', poste: 'Radar Stacks & Librairies', etat: 'fond' },
+      { nom: 'Inès Bassolé', poste: 'Actualités & Évolutions', etat: 'fond' },
+      { nom: 'Paulin Hounkpatin', poste: 'Exploration & POC', etat: 'fond' },
+    ],
+  },
+  {
+    id: 'ops', pole: 'Ops & Clients', lieu: 'Le Bureau', angle: 150, accent: '#b08145',
+    kind: 'bureau', sol: 0xe9dbc2,
+    agents: [
+      { nom: 'Aïcha Bio', poste: 'Devis & Chiffrage', etat: 'mission' },
+      { nom: 'Cyrille Zinsou', poste: 'Recouvrement & Impayés', etat: 'fond' },
+      { nom: 'Nadège Komla', poste: 'Relation Client', etat: 'fond' },
+    ],
+  },
+  {
+    id: 'data', pole: 'Data & IA', lieu: "L'Observatoire", angle: 190, accent: '#5f8a9a',
+    kind: 'data', sol: 0xe4dcc9,
+    agents: [
+      { nom: 'Séna Ahouandjinou', poste: 'Exploration & Qualité', etat: 'mission' },
+      { nom: 'Kwami Tadesse', poste: 'Pipelines & Infra Data', etat: 'repos' },
+      { nom: 'Olivier Lawson', poste: 'Modèles & Production', etat: 'repos' },
+    ],
+  },
+  {
+    id: 'bi', pole: 'Business Intelligence', lieu: "L'Observatoire", angle: 230, accent: '#8a8095',
+    kind: 'bi', sol: 0xe5dbc9,
+    agents: [
+      { nom: 'Clarisse Dossou', poste: 'Analyste Produits & KPIs', etat: 'fond' },
+      { nom: 'Yves Ahouandjigon', poste: 'Revenus & Pricing', etat: 'mission' },
+    ],
+  },
+];
+
+const RAYON_ILE = 35;
+const RAYON_POLES = 20.5;
+
+// ---------------------------------------------------------------------------
+// Rendu
+// ---------------------------------------------------------------------------
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.18;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xe9f2fa, 150, 340);
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 1, 700);
+
+const ciel = new THREE.Mesh(
+  new THREE.SphereGeometry(420, 32, 16),
+  new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    uniforms: {
+      haut: { value: new THREE.Color('#6fb0dd') },
+      bas: { value: new THREE.Color('#f2f8fc') },
+      decal: { value: 45 },
+      expo: { value: 0.72 },
+    },
+    vertexShader: `
+      varying vec3 vMonde;
+      void main() {
+        vec4 p = modelMatrix * vec4(position, 1.0);
+        vMonde = p.xyz;
+        gl_Position = projectionMatrix * viewMatrix * p;
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 haut;
+      uniform vec3 bas;
+      uniform float decal;
+      uniform float expo;
+      varying vec3 vMonde;
+      void main() {
+        float h = normalize(vMonde + vec3(0.0, decal, 0.0)).y;
+        gl_FragColor = vec4(mix(bas, haut, pow(max(h, 0.0), expo)), 1.0);
+      }
+    `,
+  })
+);
+ciel.frustumCulled = false;
+scene.add(ciel);
+
+const hemi = new THREE.HemisphereLight(0xd6ebff, 0xead3ac, 1.05);
+scene.add(hemi);
+
+const soleil = new THREE.DirectionalLight(0xffdda8, 3.05);
+soleil.position.set(-42, 58, 30);
+soleil.castShadow = true;
+soleil.shadow.mapSize.set(2048, 2048);
+soleil.shadow.camera.left = -58;
+soleil.shadow.camera.right = 58;
+soleil.shadow.camera.top = 58;
+soleil.shadow.camera.bottom = -58;
+soleil.shadow.camera.near = 8;
+soleil.shadow.camera.far = 180;
+soleil.shadow.bias = -0.0004;
+soleil.shadow.normalBias = 0.035;
+scene.add(soleil);
+
+const contre = new THREE.DirectionalLight(0xbcd8ef, 0.45);
+contre.position.set(40, 22, -45);
+scene.add(contre);
+
+// ---------------------------------------------------------------------------
+// Île : plateau, falaise, bord de sable
+// ---------------------------------------------------------------------------
+function teinterFacettes(geo, base, variance, seed) {
+  const g = geo.toNonIndexed();
+  const pos = g.attributes.position;
+  const couleurs = new Float32Array(pos.count * 3);
+  const r = graine(seed);
+  const baseColor = new THREE.Color(base);
+  for (let i = 0; i < pos.count; i += 3) {
+    const c = baseColor.clone().multiplyScalar(1 + (r() - 0.5) * variance);
+    for (let k = 0; k < 3; k++) {
+      couleurs[(i + k) * 3] = c.r;
+      couleurs[(i + k) * 3 + 1] = c.g;
+      couleurs[(i + k) * 3 + 2] = c.b;
+    }
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(couleurs, 3));
+  return g;
+}
+
+function textureHerbe() {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const x = c.getContext('2d');
+  x.fillStyle = '#8db55c';
+  x.fillRect(0, 0, 256, 256);
+  const r = graine(11);
+  const teintes = ['#7da44e', '#8fb35e', '#73994a', '#94bc64', '#82a953'];
+  for (let i = 0; i < 1100; i++) {
+    x.fillStyle = teintes[Math.floor(r() * teintes.length)];
+    x.globalAlpha = 0.35 + r() * 0.35;
+    x.beginPath();
+    x.arc(r() * 256, r() * 256, 0.8 + r() * 3.4, 0, TAU);
+    x.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(10, 10);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+const ile = new THREE.Group();
+scene.add(ile);
+
+// Bord de sable
+const bord = cyl(RAYON_ILE + 0.4, RAYON_ILE, 2.4, C.sable, 0, -1.2, 0, 56, { flatShading: true });
+bord.receiveShadow = true;
+ile.add(bord);
+
+// Surface d'herbe
+const herbe = new THREE.Mesh(
+  new THREE.CircleGeometry(RAYON_ILE, 64),
+  new THREE.MeshStandardMaterial({ map: textureHerbe(), roughness: 0.95, color: 0xffffff })
+);
+herbe.rotation.x = -PI / 2;
+herbe.position.y = 0.02;
+herbe.receiveShadow = true;
+ile.add(herbe);
+
+// Falaise
+const niveaux = [
+  { y: -2.3, r: 34.6 },
+  { y: -4.6, r: 33.4 },
+  { y: -7.0, r: 29.6 },
+  { y: -9.6, r: 23.4 },
+  { y: -12.2, r: 15.4 },
+  { y: -14.8, r: 7.4 },
+];
+const roches = [0xc9a97d, 0xb38e64, 0x9b774f, 0xa9855c];
+for (let i = 0; i < niveaux.length - 1; i++) {
+  const a = niveaux[i], b = niveaux[i + 1];
+  const geo = teinterFacettes(
+    new THREE.CylinderGeometry(a.r, b.r, a.y - b.y, 14, 1, false),
+    roches[i % roches.length],
+    0.16,
+    40 + i
+  );
+  const m = new THREE.Mesh(geo, mat(0xffffff, { vertexColors: true, flatShading: true, roughness: 0.95 }));
+  m.position.y = (a.y + b.y) / 2;
+  m.rotation.y = i * 0.13;
+  m.castShadow = true;
+  m.receiveShadow = true;
+  ile.add(m);
+}
+const pointe = new THREE.Mesh(
+  teinterFacettes(new THREE.ConeGeometry(7.2, 6.5, 14), 0x8f6d48, 0.18, 77),
+  mat(0xffffff, { vertexColors: true, flatShading: true, roughness: 0.95 })
+);
+pointe.position.y = -18;
+pointe.rotation.y = 0.4;
+pointe.castShadow = true;
+ile.add(pointe);
+
+// Rochers suspendus
+for (let i = 0; i < 9; i++) {
+  const a = hasard() * TAU;
+  const r = 8 + hasard() * 20;
+  const roche = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(0.7 + hasard() * 1.6, 0),
+    mat(roches[Math.floor(hasard() * roches.length)], { flatShading: true })
+  );
+  roche.position.set(Math.cos(a) * r, -11 - hasard() * 6, Math.sin(a) * r);
+  roche.rotation.set(hasard() * PI, hasard() * PI, hasard() * PI);
+  roche.castShadow = true;
+  ile.add(roche);
+}
+
+// ---------------------------------------------------------------------------
+// Sols : place centrale, anneau, allées, héliport
+// ---------------------------------------------------------------------------
+const place = new THREE.Mesh(
+  new THREE.CircleGeometry(11.2, 64),
+  mat(C.pierreClair, { roughness: 0.9 })
+);
+place.rotation.x = -PI / 2;
+place.position.y = 0.05;
+place.receiveShadow = true;
+ile.add(place);
+
+const anneau = new THREE.Mesh(
+  new THREE.RingGeometry(13.3, 15.3, 72),
+  mat(C.pierre, { roughness: 0.92 })
+);
+anneau.rotation.x = -PI / 2;
+anneau.position.y = 0.045;
+anneau.receiveShadow = true;
+ile.add(anneau);
+
+const medaillon = new THREE.Mesh(
+  new THREE.CircleGeometry(3.6, 40),
+  mat(C.boisClair, { roughness: 0.85 })
+);
+medaillon.rotation.x = -PI / 2;
+medaillon.position.y = 0.07;
+medaillon.receiveShadow = true;
+ile.add(medaillon);
+
+const couronne = new THREE.Mesh(
+  new THREE.TorusGeometry(3.6, 0.09, 6, 60),
+  mat(C.boisFonce, { roughness: 0.8 })
+);
+couronne.rotation.x = -PI / 2;
+couronne.position.y = 0.09;
+ile.add(couronne);
+
+function allee(angleDeg) {
+  const a = angleDeg * PI / 180;
+  const longueur = 6.4;
+  const p = plan(1.5, longueur, C.pierre, 0, 0.055, 0);
+  p.position.set(Math.cos(a) * 13.9, 0.055, Math.sin(a) * 13.9);
+  p.rotation.z = -a;
+  ile.add(p);
+}
+POLES.forEach(p => allee(p.angle));
+
+// Petit jardin circulaire à l'ouest
+const jardin = new THREE.Group();
+jardin.position.set(Math.cos(295 * PI / 180) * 22.5, 0, Math.sin(295 * PI / 180) * 22.5);
+const cercleJardin = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.24, 6, 40), mat(C.pierreSombre, { flatShading: true }));
+cercleJardin.rotation.x = -PI / 2;
+cercleJardin.position.y = 0.12;
+jardin.add(cercleJardin);
+const buis = [0x6f9451, 0x7fa65c, 0x5f8347];
+for (let i = 0; i < 7; i++) {
+  const a = (i / 7) * TAU;
+  const bu = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3 + hasard() * 0.2, 0), mat(buis[i % 3], { flatShading: true }));
+  bu.position.set(Math.cos(a) * 1.65, 0.35, Math.sin(a) * 1.65);
+  bu.castShadow = true;
+  jardin.add(bu);
+}
+ile.add(jardin);
+
+// ---------------------------------------------------------------------------
+// Mobilier
+// ---------------------------------------------------------------------------
+function bureau(parent, x, z, rot) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.34, z);
+  g.rotation.y = rot;
+  g.add(box(1.65, 0.07, 0.74, C.bois, 0, 0.72, 0));
+  g.add(box(0.07, 0.72, 0.68, C.boisFonce, -0.74, 0.36, 0));
+  g.add(box(0.07, 0.72, 0.68, C.boisFonce, 0.74, 0.36, 0));
+  g.add(box(0.48, 0.12, 0.62, C.murOmbre, 0.4, 0.62, 0));
+
+  const ecran = new THREE.Group();
+  ecran.position.set(-0.12, 0.78, -0.16);
+  ecran.add(box(0.28, 0.03, 0.18, C.metalClair, 0, 0, 0));
+  ecran.add(box(0.035, 0.3, 0.035, C.metalClair, 0, 0.17, 0.02));
+  const plaque = box(0.64, 0.4, 0.045, C.ecran, 0, 0.5, 0.03);
+  plaque.rotation.x = -0.05;
+  ecran.add(plaque);
+  const lueur = plan(0.58, 0.34, C.ecranClair, 0, 0.5, 0.056);
+  lueur.rotation.x = -PI / 2 - 0.05;
+  ecran.add(lueur);
+  g.add(ecran);
+
+  g.add(box(0.5, 0.025, 0.16, C.blanc, -0.2, 0.78, 0.22));
+  g.add(box(0.22, 0.012, 0.3, C.blanc, -0.52, 0.766, 0.14));
+  g.add(cyl(0.055, 0.05, 0.11, C.terracotta, 0.42, 0.79, 0.18, 8));
+  parent.add(g);
+  return g;
+}
+
+function chaise(parent, x, z, rot) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.34, z);
+  g.rotation.y = rot;
+  g.add(box(0.5, 0.08, 0.5, C.tissu, 0, 0.52, 0));
+  g.add(box(0.5, 0.55, 0.08, C.tissu, 0, 0.82, -0.22));
+  g.add(cyl(0.05, 0.05, 0.5, C.metal, 0, 0.26, 0, 8));
+  g.add(box(0.5, 0.04, 0.5, C.metal, 0, 0.05, 0));
+  parent.add(g);
+  return g;
+}
+
+function plante(parent, x, z, echelle = 1) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.34, z);
+  g.add(cyl(0.24 * echelle, 0.18 * echelle, 0.34, C.terracotta, 0, 0.17, 0, 10));
+  const verts = [0x6f9451, 0x7fa65c, 0x5f8347];
+  for (let i = 0; i < 3; i++) {
+    const f = new THREE.Mesh(
+      new THREE.IcosahedronGeometry((0.26 + hasard() * 0.12) * echelle, 0),
+      mat(verts[i % verts.length], { flatShading: true })
+    );
+    f.position.set((hasard() - 0.5) * 0.3 * echelle, (0.55 + i * 0.22) * echelle, (hasard() - 0.5) * 0.3 * echelle);
+    f.castShadow = true;
+    g.add(f);
+  }
+  parent.add(g);
+  return g;
+}
+
+function etagere(parent, x, z, rot) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.34, z);
+  g.rotation.y = rot;
+  g.add(box(1.3, 1.45, 0.36, C.boisClair, 0, 0.73, 0));
+  g.add(box(1.2, 1.3, 0.06, C.boisFonce, 0, 0.73, 0.17));
+  const couleursLivres = [0xb98a63, 0x8d9a4c, 0xa65a4f, 0x5f8a9a, 0xc2a04a, 0x9a8a7a];
+  for (let i = 0; i < 3; i++) {
+    const y = 0.38 + i * 0.4;
+    g.add(box(1.1, 0.04, 0.26, C.boisFonce, 0, y, 0.02));
+    for (let j = 0; j < 5; j++) {
+      const h = 0.18 + hasard() * 0.08;
+      g.add(box(0.11, h, 0.2, couleursLivres[Math.floor(hasard() * couleursLivres.length)],
+        -0.44 + j * 0.22, y + 0.02 + h / 2, 0.04));
+    }
+  }
+  parent.add(g);
+  return g;
+}
+
+// ---------------------------------------------------------------------------
+// Les agents
+// ---------------------------------------------------------------------------
+const PEINTURES = [0xf2c9a4, 0xe3ad82, 0xc98f63, 0x9d6a44, 0x7c4c2f, 0xf5d8bf];
+const HABITS = [0x6f8fa3, 0xc4734a, 0x8d9a4c, 0xb08145, 0x7a7f8c, 0xa65a4f, 0x6e8f7c, 0xd3b483, 0x8a8095];
+const CHEVEUX = [0x2f2a24, 0x4a382a, 0x1f1d1a, 0x6b4a2f, 0x3a2f26];
+
+function agent(parent, x, z, rot, assis, index) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.34, z);
+  g.rotation.y = rot;
+
+  const peau = PEINTURES[index % PEINTURES.length];
+  const habit = HABITS[index % HABITS.length];
+  const cheveu = CHEVEUX[index % CHEVEUX.length];
+
+  const h = assis ? 0.5 : 0;
+  g.add(box(0.46, 0.58, 0.28, habit, 0, h + 0.98, 0));
+  g.add(box(0.1, 0.52, 0.12, habit, -0.29, h + 1.0, 0));
+  g.add(box(0.1, 0.52, 0.12, habit, 0.29, h + 1.0, 0));
+
+  const tete = new THREE.Mesh(new THREE.SphereGeometry(0.17, 16, 12), mat(peau, { roughness: 0.75 }));
+  tete.position.set(0, h + 1.43, 0);
+  tete.castShadow = true;
+  g.add(tete);
+  const chevelure = new THREE.Mesh(new THREE.SphereGeometry(0.175, 16, 10, 0, TAU, 0, 1.25), mat(cheveu, { roughness: 0.9 }));
+  chevelure.position.set(0, h + 1.46, -0.01);
+  chevelure.castShadow = true;
+  g.add(chevelure);
+
+  if (assis) {
+    g.add(box(0.18, 0.18, 0.46, 0x5c6066, -0.12, 0.62, 0.28));
+    g.add(box(0.18, 0.18, 0.46, 0x5c6066, 0.12, 0.62, 0.28));
+    g.add(box(0.17, 0.4, 0.18, 0x5c6066, -0.12, 0.32, 0.44));
+    g.add(box(0.17, 0.4, 0.18, 0x5c6066, 0.12, 0.32, 0.44));
+  } else {
+    g.add(box(0.18, 0.56, 0.19, 0x5c6066, -0.12, 0.28, 0));
+    g.add(box(0.18, 0.56, 0.19, 0x5c6066, 0.12, 0.28, 0));
+    g.add(box(0.2, 0.08, 0.28, 0x433c34, -0.12, 0.04, 0.05));
+    g.add(box(0.2, 0.08, 0.28, 0x433c34, 0.12, 0.04, 0.05));
+  }
+
+  parent.add(g);
+  return g;
+}
+
+// ---------------------------------------------------------------------------
+// Terrasse extérieure, au sud
+// ---------------------------------------------------------------------------
+const terrasse = new THREE.Group();
+terrasse.position.set(0, 0, 27.2);
+const solTerrasse = cyl(4.5, 4.6, 0.2, C.pierreClair, 0, 0.1, 0, 36, { roughness: 0.93 });
+solTerrasse.receiveShadow = true;
+terrasse.add(solTerrasse);
+const bordureTerrasse = new THREE.Mesh(new THREE.TorusGeometry(4.5, 0.18, 6, 44), mat(C.pierreSombre, { flatShading: true }));
+bordureTerrasse.rotation.x = -PI / 2;
+bordureTerrasse.position.y = 0.2;
+terrasse.add(bordureTerrasse);
+
+const coins = [
+  { x: -1.9, z: -0.7, parasol: true },
+  { x: 1.6, z: -1.5, parasol: true },
+  { x: 1.1, z: 1.8, parasol: false },
+];
+for (const c of coins) {
+  const table = new THREE.Group();
+  table.position.set(c.x, 0.2, c.z);
+  table.add(cyl(0.68, 0.68, 0.07, C.bois, 0, 0.72, 0, 24));
+  table.add(cyl(0.07, 0.09, 0.7, C.boisFonce, 0, 0.36, 0, 8));
+  table.add(cyl(0.32, 0.38, 0.06, C.boisFonce, 0, 0.03, 0, 16));
+  table.add(cyl(0.05, 0.045, 0.09, C.terracotta, 0.2, 0.8, 0.1, 8));
+  terrasse.add(table);
+
+  chaise(terrasse, c.x - 1.05, c.z + 0.15, PI / 2 + 0.2);
+  chaise(terrasse, c.x + 1.05, c.z - 0.15, -PI / 2 + 0.2);
+
+  if (c.parasol) {
+    const pied = new THREE.Group();
+    pied.position.set(c.x, 0.2, c.z);
+    pied.add(cyl(0.055, 0.055, 2.35, C.boisFonce, 0, 1.17, 0, 8));
+    const voile = new THREE.Mesh(new THREE.ConeGeometry(1.75, 0.42, 8), mat(0xf2e6cf, { flatShading: true }));
+    voile.position.y = 2.25;
+    voile.castShadow = true;
+    pied.add(voile);
+    pied.add(cyl(0.07, 0.07, 0.12, C.terracotta, 0, 2.5, 0, 8));
+    terrasse.add(pied);
+  }
+}
+
+for (let i = 0; i < 4; i++) {
+  const a = PI / 4 + i * PI / 2;
+  const bac = new THREE.Group();
+  bac.position.set(Math.cos(a) * 3.7, 0, Math.sin(a) * 3.7);
+  bac.rotation.y = -a + PI / 2;
+  bac.add(box(1.4, 0.42, 0.5, C.boisFonce, 0, 0.21, 0));
+  bac.add(box(1.3, 0.3, 0.4, 0x5f8347, 0, 0.48, 0, { flatShading: true }));
+  bac.add(box(0.2, 0.16, 0.2, 0xe0b96a, -0.35, 0.66, 0));
+  terrasse.add(bac);
+}
+
+agent(terrasse, 0.1, 0.9, -0.7, false, 6);
+agent(terrasse, 0.7, 1.5, 2.3, false, 21);
+ile.add(terrasse);
+
+// allée de la place jusqu'à la terrasse
+const alleeTerrasse = plan(1.8, 7.0, C.pierre, 0, 0.05, 0);
+alleeTerrasse.position.set(0, 0.05, 19.0);
+alleeTerrasse.rotation.z = -PI / 2;
+ile.add(alleeTerrasse);
+
+// ---------------------------------------------------------------------------
+// Bâtiments sans toit
+// ---------------------------------------------------------------------------
+const W = 10.6;
+const D = 8.6;
+const H = 2.55;
+
+function pavillon(spec, index) {
+  const g = new THREE.Group();
+  const a = spec.angle * PI / 180;
+  const x = Math.cos(a) * RAYON_POLES;
+  const z = Math.sin(a) * RAYON_POLES;
+  g.position.set(x, 0, z);
+  g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+
+  // dalle
+  const dalle = box(W + 1.1, 0.34, D + 1.1, C.dalle, 0, 0.17, 0, { roughness: 0.94 });
+  g.add(dalle);
+
+  // plancher intérieur
+  g.add(plan(W - 0.4, D - 0.4, spec.sol, 0, 0.35, 0, { roughness: 0.97 }));
+
+  // murs et vitrages
+  g.add(box(W, H, 0.3, C.mur, 0, 0.34 + H / 2, -D / 2 + 0.15));
+  for (const cote of [-1, 1]) {
+    g.add(box(0.3, 1.0, D, C.mur, cote * (W / 2 - 0.15), 0.84, 0));
+    const verre = box(0.12, 1.22, D - 0.5, C.verre, cote * (W / 2 - 0.15), 1.98, 0, {
+      transparent: true, opacity: 0.28, roughness: 0.18, metalness: 0, depthWrite: false, side: THREE.DoubleSide,
+    });
+    verre.castShadow = false;
+    g.add(verre);
+    for (const mz of [-D / 3, 0, D / 3]) {
+      g.add(box(0.16, 2.4, 0.12, C.mur, cote * (W / 2 - 0.15), 1.54, mz));
+    }
+  }
+
+  // façade ouverte + linteau
+  for (const cote of [-1, 1]) {
+    g.add(box((W - 2.6) / 2, 1.0, 0.3, C.mur, cote * (W / 4 + 0.65), 0.84, D / 2 - 0.15));
+  }
+  g.add(box(W, 0.34, 0.36, C.mur, 0, 0.34 + H - 0.17, D / 2 - 0.18));
+  g.add(box(W, 0.12, 0.42, C.boisClair, 0, 0.34 + H + 0.02, D / 2 - 0.18));
+
+  // poteaux
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      g.add(box(0.34, H + 0.1, 0.34, C.mur, sx * (W / 2 - 0.17), 0.34 + (H + 0.1) / 2, sz * (D / 2 - 0.17)));
+    }
+  }
+
+  // plaque de couleur au-dessus de la porte
+  g.add(box(2.4, 0.34, 0.1, new THREE.Color(spec.accent).getHex(), 0, 0.34 + H + 0.24, D / 2 - 0.12));
+
+  // rangée arrière
+  const posteArriere = [
+    { x: -2.35, z: -2.55, rot: 0 },
+    { x: 2.35, z: -2.55, rot: 0 },
+  ];
+  // rangée avant
+  const posteAvant = [
+    { x: -2.35, z: 2.45, rot: PI },
+    { x: 2.35, z: 2.45, rot: PI },
+  ];
+
+  const places = [
+    ...posteArriere.map(p => ({ ...p, assis: true })),
+    ...posteAvant.map(p => ({ ...p, assis: true })),
+  ];
+
+  const signature = spec.agents.length;
+
+  places.forEach((p, i) => {
+    if (i >= signature) return;
+    bureau(g, p.x, p.z, p.rot);
+    const bord = p.x < 0 ? p.x - 1.0 : p.x + 1.0;
+    g.add(box(0.09, 0.92, 1.15, 0x9aa88a, bord, 0.8, p.z));
+    g.add(box(0.14, 0.07, 1.2, C.boisClair, bord, 1.29, p.z));
+  });
+
+  // plantes et rangement
+  plante(g, -W / 2 + 0.75, D / 2 - 0.8, 1);
+  plante(g, W / 2 - 0.75, -D / 2 + 0.85, 0.85);
+  plante(g, -W / 2 + 0.8, -D / 2 + 0.9, 0.7);
+
+  // meuble signature selon le lieu
+  switch (spec.kind) {
+    case 'forge': {
+      // baie de serveurs
+      const rack = new THREE.Group();
+      rack.position.set(W / 2 - 1.2, 0.34, -D / 2 + 0.85);
+      for (let i = 0; i < 2; i++) {
+        rack.add(box(0.7, 1.9, 0.55, 0x4f5459, i * 0.9 - 0.45, 0.95, 0, { roughness: 0.7 }));
+        for (let j = 0; j < 4; j++) {
+          rack.add(box(0.5, 0.05, 0.05, 0xcfd8cf, i * 0.9 - 0.45, 0.55 + j * 0.3, 0.28));
+        }
+      }
+      g.add(rack);
+      break;
+    }
+    case 'atelier': {
+      // chevalet et toile
+      const chevalet = new THREE.Group();
+      chevalet.position.set(2.6, 0.34, 2.1);
+      chevalet.rotation.y = -0.5;
+      chevalet.add(box(0.08, 1.5, 0.08, C.boisFonce, -0.4, 0.75, 0.15));
+      chevalet.add(box(0.08, 1.5, 0.08, C.boisFonce, 0.4, 0.75, 0.15));
+      chevalet.add(box(0.08, 1.3, 0.08, C.boisFonce, 0, 0.65, -0.25));
+      chevalet.add(box(0.95, 0.7, 0.06, C.blanc, 0, 1.02, 0.02));
+      chevalet.add(box(0.75, 0.5, 0.02, 0xd9a06a, 0, 1.02, 0.06));
+      g.add(chevalet);
+      break;
+    }
+    case 'mobile': {
+      // présentoir de téléphones
+      const stand = new THREE.Group();
+      stand.position.set(2.5, 0.34, 2.2);
+      stand.add(box(1.4, 0.06, 0.6, C.boisClair, 0, 0.85, 0));
+      stand.add(box(0.06, 0.85, 0.5, C.boisFonce, -0.6, 0.43, 0));
+      stand.add(box(0.06, 0.85, 0.5, C.boisFonce, 0.6, 0.43, 0));
+      for (let i = 0; i < 3; i++) {
+        const t = box(0.3, 0.58, 0.05, 0x3f464c, -0.4 + i * 0.4, 1.17, 0, { roughness: 0.5 });
+        t.rotation.x = -0.18;
+        stand.add(t);
+        const e = box(0.25, 0.5, 0.01, 0xbfe0e6, -0.4 + i * 0.4, 1.17, 0.031, { roughness: 0.4 });
+        e.rotation.x = -0.18;
+        stand.add(e);
+      }
+      g.add(stand);
+      break;
+    }
+    case 'comptoir': {
+      // comptoir d'accueil
+      const cpt = new THREE.Group();
+      cpt.position.set(2.7, 0.34, 3.35);
+      cpt.add(box(2.0, 1.0, 0.62, C.mur, 0, 0.5, 0));
+      cpt.add(box(2.1, 0.09, 0.72, C.bois, 0, 1.03, 0));
+      cpt.add(box(0.45, 0.32, 0.05, 0x3f464c, -0.45, 0.66, 0.33));
+      cpt.add(box(0.4, 0.28, 0.02, 0xd7cbb4, -0.45, 0.66, 0.36));
+      g.add(cpt);
+      break;
+    }
+    case 'bastion': {
+      // porte blindée + emblème
+      const porte = new THREE.Group();
+      porte.position.set(0, 0.34, -D / 2 + 0.38);
+      porte.add(box(2.2, 2.1, 0.14, 0x8b8f92, 0, 1.05, 0, { roughness: 0.6 }));
+      const disque = cyl(0.72, 0.72, 0.1, 0x5d6165, 0, 1.08, 0.09, 28, { roughness: 0.5 });
+      disque.rotation.x = PI / 2;
+      porte.add(disque);
+      porte.add(box(0.5, 0.1, 0.06, 0xb8a98f, 0, 1.08, 0.16));
+      porte.add(box(0.1, 0.5, 0.06, 0xb8a98f, 0, 1.08, 0.16));
+      g.add(porte);
+      break;
+    }
+    case 'vigie': {
+      // tour de guet avec Hibou
+      const tour = new THREE.Group();
+      tour.position.set(W / 2 + 1.9, 0, -D / 2 + 1.4);
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          tour.add(box(0.14, 4.4, 0.14, C.boisFonce, sx * 0.62, 2.2, sz * 0.62));
+        }
+      }
+      tour.add(box(1.7, 0.16, 1.7, C.boisClair, 0, 4.3, 0));
+      tour.add(box(1.7, 0.08, 0.1, C.bois, 0, 4.9, -0.8));
+      tour.add(box(1.7, 0.08, 0.1, C.bois, 0, 4.9, 0.8));
+      tour.add(box(0.1, 0.08, 1.7, C.bois, -0.8, 4.9, 0));
+      tour.add(box(0.1, 0.08, 1.7, C.bois, 0.8, 4.9, 0));
+      const tipi = new THREE.Mesh(new THREE.ConeGeometry(1.3, 0.9, 4), mat(C.terracotta, { flatShading: true }));
+      tipi.position.y = 5.5;
+      tipi.rotation.y = PI / 4;
+      tipi.castShadow = true;
+      tour.add(tipi);
+
+      // Hibou
+      const hibou = new THREE.Group();
+      hibou.position.set(0, 4.55, 0.35);
+      const corps = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), mat(0xa78a68, { roughness: 0.9 }));
+      corps.scale.set(1, 1.15, 0.9);
+      corps.position.y = 0.45;
+      corps.castShadow = true;
+      hibou.add(corps);
+      const teteH = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), mat(0xb59a76, { roughness: 0.9 }));
+      teteH.position.y = 0.88;
+      teteH.castShadow = true;
+      hibou.add(teteH);
+      for (const sx of [-1, 1]) {
+        const oreille = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.18, 5), mat(0x8f7354));
+        oreille.position.set(sx * 0.15, 1.06, 0);
+        hibou.add(oreille);
+        const oeil = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), mat(0xf5eedd, { roughness: 0.4 }));
+        oeil.position.set(sx * 0.1, 0.91, 0.22);
+        hibou.add(oeil);
+        const pupille = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 6), mat(0x2b2823));
+        pupille.position.set(sx * 0.1, 0.91, 0.285);
+        hibou.add(pupille);
+        const aile = box(0.1, 0.42, 0.3, 0x997c5c, sx * 0.3, 0.45, 0);
+        aile.rotation.z = sx * -0.12;
+        hibou.add(aile);
+      }
+      tour.add(hibou);
+      g.add(tour);
+      break;
+    }
+    case 'bureau': {
+      // coin salon
+      const salon = new THREE.Group();
+      salon.position.set(2.5, 0.34, 2.4);
+      salon.add(box(1.9, 0.42, 0.8, C.terracotta, 0, 0.22, 0.3));
+      salon.add(box(1.9, 0.6, 0.18, C.terracotta, 0, 0.55, -0.22));
+      salon.add(box(0.18, 0.48, 0.8, C.terracotta, -0.95, 0.42, 0.3));
+      salon.add(box(0.18, 0.48, 0.8, C.terracotta, 0.95, 0.42, 0.3));
+      salon.add(box(0.8, 0.08, 0.5, C.bois, 0, 0.45, 0.95));
+      g.add(salon);
+      break;
+    }
+    case 'data': {
+      // tableau de données
+      const mur = new THREE.Group();
+      mur.position.set(-2.6, 0.34, -D / 2 + 0.4);
+      mur.add(box(2.6, 1.15, 0.08, C.blanc, 0, 1.5, 0));
+      const teintes = [0x5f8a9a, 0x7d9b4e, 0xc2a04a];
+      for (let i = 0; i < 5; i++) {
+        const hb = 0.2 + hasard() * 0.55;
+        mur.add(box(0.28, hb, 0.03, teintes[i % 3], -0.9 + i * 0.44, 1.0 + hb / 2, 0.06));
+      }
+      g.add(mur);
+      break;
+    }
+    case 'bi': {
+      // tableau de bord
+      const mur = new THREE.Group();
+      mur.position.set(2.9, 0.34, -D / 2 + 0.4);
+      mur.add(box(2.5, 1.2, 0.08, 0x4a5054, 0, 1.55, 0, { roughness: 0.5 }));
+      mur.add(box(2.3, 1.0, 0.02, 0xe8eef0, 0, 1.55, 0.05));
+      for (let i = 0; i < 4; i++) {
+        mur.add(box(0.34, 0.3 + i * 0.18, 0.02, 0x8a8095, -0.75 + i * 0.5, 1.15 + (0.3 + i * 0.18) / 2, 0.07));
+      }
+      g.add(mur);
+      break;
+    }
+  }
+
+  // rangement au fond
+  if (spec.kind !== 'forge' && spec.kind !== 'bastion') {
+    etagere(g, 0.45, -D / 2 + 0.6, 0);
+  }
+
+  // les agents à leur poste
+  const agentsGroup = new THREE.Group();
+  g.add(agentsGroup);
+  const positions = [
+    { x: -2.35, z: -1.78, rot: PI, assis: true },
+    { x: 2.35, z: -1.78, rot: PI, assis: true },
+    { x: -2.35, z: 1.68, rot: 0, assis: true },
+    { x: 2.35, z: 1.68, rot: 0, assis: true },
+  ];
+
+  const groupes = [];
+  spec.agents.forEach((a, i) => {
+    const p = positions[i] || positions[0];
+    const rot = p.rot;
+    let ag;
+    if (i < signature) {
+      chaise(agentsGroup, p.x, p.z + (p.rot === 0 ? -0.08 : 0.08), rot);
+      ag = agent(agentsGroup, p.x, p.z, rot, true, index * 3 + i);
+    } else {
+      ag = agent(agentsGroup, p.x + 0.6, p.z + 0.3, rot + 0.7, false, index * 3 + i);
+    }
+    groupes.push(ag);
+  });
+
+  ile.add(g);
+
+  return { group: g, agentsGroupes: groupes };
+}
+
+// --- Le Quartier Général, au centre ---
+function siegeCentral() {
+  const g = new THREE.Group();
+  const Wc = 14.2, Dc = 10.4, Hc = 2.8;
+
+  const dalle = new THREE.Mesh(new THREE.CylinderGeometry(8.6, 8.9, 0.3, 40), mat(C.dalle, { roughness: 0.94 }));
+  dalle.position.y = 0.15;
+  dalle.receiveShadow = true;
+  dalle.castShadow = true;
+  g.add(dalle);
+
+  g.add(plan(Wc, Dc, 0xdfc9a8, 0, 0.32, 0, { roughness: 0.9 }));
+
+  // parois basses + vitrages
+  g.add(box(Wc, 0.9, 0.3, C.mur, 0, 0.75, -Dc / 2));
+  const verreFond = box(Wc - 0.6, 1.9, 0.1, C.verre, 0, 2.15, -Dc / 2, {
+    transparent: true, opacity: 0.26, roughness: 0.15, depthWrite: false, side: THREE.DoubleSide,
+  });
+  verreFond.castShadow = false;
+  g.add(verreFond);
+
+  for (const cote of [-1, 1]) {
+    g.add(box(0.3, 0.9, Dc, C.mur, cote * Wc / 2, 0.75, 0));
+    const v = box(0.1, 1.9, Dc - 0.5, C.verre, cote * Wc / 2, 2.15, 0, {
+      transparent: true, opacity: 0.26, roughness: 0.15, depthWrite: false, side: THREE.DoubleSide,
+    });
+    v.castShadow = false;
+    g.add(v);
+    for (const mz of [-Dc / 3, 0, Dc / 3]) {
+      g.add(box(0.14, 2.7, 0.1, C.mur, cote * Wc / 2, 1.6, mz));
+    }
+  }
+  for (const mx of [-Wc / 3, 0, Wc / 3]) {
+    g.add(box(0.1, 2.7, 0.14, C.mur, mx, 1.6, -Dc / 2));
+  }
+  for (const cote of [-1, 1]) {
+    g.add(box((Wc - 3.4) / 2, 0.9, 0.3, C.mur, cote * (Wc / 4 + 0.85), 0.75, Dc / 2));
+  }
+  for (const sx of [-1, 1]) {
+    for (const sz of [-1, 1]) {
+      g.add(box(0.36, Hc, 0.36, C.mur, sx * (Wc / 2 - 0.18), Hc / 2 + 0.3, sz * (Dc / 2 - 0.18)));
+    }
+  }
+  g.add(box(Wc, 0.32, 0.36, C.mur, 0, Hc + 0.14, Dc / 2 - 0.18));
+
+  // table de réunion
+  const table = new THREE.Group();
+  table.add(cyl(2.2, 2.2, 0.1, C.bois, 0, 0.98, 0, 40));
+  table.children[0].scale.z = 0.66;
+  table.add(cyl(0.5, 0.7, 0.86, C.boisFonce, 0, 0.5, 0, 16));
+  g.add(table);
+
+  for (let i = 0; i < 8; i++) {
+    const ang = (i / 8) * TAU;
+    const cx = Math.cos(ang) * 2.6;
+    const cz = Math.sin(ang) * 1.75;
+    chaise(g, cx, cz, -ang + PI / 2);
+  }
+
+  // écrans muraux
+  g.add(box(2.0, 1.0, 0.08, 0x444b50, -3.1, 1.75, -Dc / 2 + 0.3, { roughness: 0.5 }));
+  g.add(box(1.85, 0.85, 0.02, 0xe3eef0, -3.1, 1.75, -Dc / 2 + 0.35));
+  g.add(box(1.6, 0.9, 0.08, 0x444b50, 2.8, 1.8, -Dc / 2 + 0.3, { roughness: 0.5 }));
+  g.add(box(1.45, 0.75, 0.02, 0xe3eef0, 2.8, 1.8, -Dc / 2 + 0.35));
+
+  plante(g, -Wc / 2 + 0.8, Dc / 2 - 0.9, 1.1);
+  plante(g, Wc / 2 - 0.8, Dc / 2 - 0.9, 1.1);
+  plante(g, -Wc / 2 + 0.8, -Dc / 2 + 0.9, 0.9);
+
+  // Le DG, debout au bout de la table
+  const dg = agent(g, 0, -2.6, 0, false, 2);
+
+  ile.add(g);
+  return { group: g, dg, dz: 0 };
+}
+
+// --- L'Atelier des Ateliers ---
+function atelierDesAteliers() {
+  const g = new THREE.Group();
+  const a = 258 * PI / 180;
+  g.position.set(Math.cos(a) * 27.2, 0, Math.sin(a) * 27.2);
+  g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+
+  const w = 6.4, d = 4.6, h = 2.3;
+  g.add(box(w + 0.8, 0.28, d + 0.8, C.dalle, 0, 0.14, 0, { roughness: 0.95 }));
+  g.add(plan(w - 0.5, d - 0.5, 0xddd2bd, 0, 0.29, 0, { roughness: 0.98 }));
+  g.add(box(w, h, 0.28, C.mur, 0, 0.28 + h / 2, -d / 2 + 0.14));
+  for (const cote of [-1, 1]) {
+    g.add(box(0.28, 1.0, d, C.mur, cote * (w / 2 - 0.14), 0.78, 0));
+  }
+  g.add(box(w - 3.0, 1.0, 0.28, C.mur, -(w / 2 - (w - 3.0) / 4), 0.78, d / 2 - 0.14));
+  for (const sx of [-1, 1]) {
+    g.add(box(0.3, h, 0.3, C.mur, sx * (w / 2 - 0.15), 0.28 + h / 2, -d / 2 + 0.15));
+  }
+
+  // établi
+  const etabli = new THREE.Group();
+  etabli.position.set(0.2, 0.28, -1.15);
+  etabli.add(box(3.4, 0.1, 0.9, C.bois, 0, 0.85, 0));
+  for (const sx of [-1, 1]) {
+    etabli.add(box(0.12, 0.85, 0.8, C.boisFonce, sx * 1.55, 0.42, 0));
+  }
+  etabli.add(box(0.5, 0.4, 0.4, C.metal, -0.9, 1.1, 0));
+  etabli.add(box(0.3, 0.35, 0.3, C.terracotta, 0.6, 1.07, 0));
+  etabli.add(box(0.7, 0.06, 0.4, 0x8a8f92, 1.1, 0.94, 0.1));
+  g.add(etabli);
+
+  // caisses
+  for (let i = 0; i < 3; i++) {
+    const cr = box(0.6, 0.6, 0.6, C.boisClair, -2.2 + i * 0.05, 0.58 + i * 0.58, 1.0);
+    cr.rotation.y = i * 0.2;
+    g.add(cr);
+  }
+  plante(g, 2.4, 1.2, 0.8);
+
+  ile.add(g);
+  return g;
+}
+
+// ---------------------------------------------------------------------------
+// Végétation, détails
+// ---------------------------------------------------------------------------
+const exclusions = [];
+POLES.forEach(p => {
+  const a = p.angle * PI / 180;
+  exclusions.push({ x: Math.cos(a) * RAYON_POLES, z: Math.sin(a) * RAYON_POLES, r: 9.2 });
+});
+exclusions.push({ x: 0, z: 0, r: 13.5 });
+exclusions.push({ x: jardin.position.x, z: jardin.position.z, r: 5.2 });
+exclusions.push({ x: terrasse.position.x, z: terrasse.position.z, r: 6.4 });
+exclusions.push({ x: Math.cos(258 * PI / 180) * 27.2, z: Math.sin(258 * PI / 180) * 27.2, r: 5.5 });
+
+function placeLibre(x, z, r) {
+  if (Math.hypot(x, z) > RAYON_ILE - 3.5) return false;
+  for (const e of exclusions) {
+    if (Math.hypot(x - e.x, z - e.z) < e.r + r) return false;
+  }
+  return true;
+}
+
+const matsFeuilles = [0x6f9451, 0x7fa65c, 0x5f8347, 0x89ad63];
+const geoFeuille = new THREE.IcosahedronGeometry(1, 0);
+const geoFeuille2 = new THREE.IcosahedronGeometry(0.7, 0);
+const geoFeuille3 = new THREE.IcosahedronGeometry(0.5, 0);
+const geoFeuille4 = new THREE.IcosahedronGeometry(0.36, 0);
+const geoFeuille5 = new THREE.SphereGeometry(0.5, 10, 8);
+
+function arbre(x, z, echelle = 1) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const tronc = cyl(0.14 * echelle, 0.2 * echelle, 1.15 * echelle, C.boisFonce, 0, 0.57 * echelle, 0, 7);
+  g.add(tronc);
+  const f1 = new THREE.Mesh(geoFeuille, mat(matsFeuilles[Math.floor(hasard() * matsFeuilles.length)], { flatShading: true }));
+  f1.scale.setScalar(1.15 * echelle);
+  f1.position.y = 1.55 * echelle;
+  f1.castShadow = true;
+  g.add(f1);
+  const f2 = new THREE.Mesh(geoFeuille2, mat(matsFeuilles[Math.floor(hasard() * matsFeuilles.length)], { flatShading: true }));
+  f2.scale.setScalar(1.15 * echelle);
+  f2.position.set(0.35 * echelle, 1.95 * echelle, 0.2 * echelle);
+  f2.castShadow = true;
+  g.add(f2);
+  const f3 = new THREE.Mesh(geoFeuille3, mat(matsFeuilles[Math.floor(hasard() * matsFeuilles.length)], { flatShading: true }));
+  f3.scale.setScalar(1.15 * echelle);
+  f3.position.set(-0.3 * echelle, 2.0 * echelle, -0.15 * echelle);
+  f3.castShadow = true;
+  g.add(f3);
+  g.rotation.y = hasard() * TAU;
+  ile.add(g);
+  return g;
+}
+
+function buisson(x, z, echelle = 1) {
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  const b = new THREE.Mesh(geoFeuille4, mat(matsFeuilles[Math.floor(hasard() * matsFeuilles.length)], { flatShading: true }));
+  b.scale.setScalar(1.6 * echelle);
+  b.position.y = 0.45 * echelle;
+  b.castShadow = true;
+  g.add(b);
+  const b2 = new THREE.Mesh(geoFeuille4, mat(0x86a862, { flatShading: true }));
+  b2.scale.setScalar(1.1 * echelle);
+  b2.position.set(0.5 * echelle, 0.32 * echelle, 0.2 * echelle);
+  b2.castShadow = true;
+  g.add(b2);
+  ile.add(g);
+  return g;
+}
+
+// arbres de lisière
+let arbresPosés = 0;
+let essais = 0;
+while (arbresPosés < 52 && essais < 600) {
+  essais++;
+  const a = hasard() * TAU;
+  const r = 17 + hasard() * 17;
+  const x = Math.cos(a) * r;
+  const z = Math.sin(a) * r;
+  if (!placeLibre(x, z, 1.6)) continue;
+  arbre(x, z, 0.85 + hasard() * 0.7 + (r > 27 ? 0.15 : 0));
+  arbresPosés++;
+}
+
+// bosquets dans les interstices
+for (let i = 0; i < 22; i++) {
+  const a = hasard() * TAU;
+  const r = 16.2 + hasard() * 3.4;
+  const x = Math.cos(a) * r;
+  const z = Math.sin(a) * r;
+  if (!placeLibre(x, z, 0.8)) continue;
+  if (hasard() > 0.55) arbre(x, z, 0.7 + hasard() * 0.3);
+  else buisson(x, z, 0.7 + hasard() * 0.5);
+}
+
+// bancs autour de la place
+for (let i = 0; i < 8; i++) {
+  const a = (i / 8) * TAU + 0.2;
+  const x = Math.cos(a) * 11.9;
+  const z = Math.sin(a) * 11.9;
+  const banc = new THREE.Group();
+  banc.position.set(x, 0, z);
+  banc.rotation.y = -a + PI / 2;
+  banc.add(box(2.3, 0.14, 0.62, C.bois, 0, 0.48, 0));
+  banc.add(box(2.3, 0.42, 0.12, C.bois, 0, 0.72, -0.28));
+  banc.add(box(0.12, 0.48, 0.6, C.boisFonce, -0.95, 0.24, 0));
+  banc.add(box(0.12, 0.48, 0.6, C.boisFonce, 0.95, 0.24, 0));
+  ile.add(banc);
+}
+
+// petits massifs fleuris
+const fleurs = [0xd98d64, 0xe0b96a, 0xc4705a, 0xe9d08f];
+for (let i = 0; i < 16; i++) {
+  const a = hasard() * TAU;
+  const r = 12.4 + hasard() * 1.4;
+  const x = Math.cos(a) * r;
+  const z = Math.sin(a) * r;
+  const massif = new THREE.Group();
+  massif.position.set(x, 0, z);
+  massif.add(cyl(0.55, 0.6, 0.22, 0xb8a277, 0, 0.11, 0, 10));
+  for (let j = 0; j < 5; j++) {
+    const f = new THREE.Mesh(new THREE.IcosahedronGeometry(0.08 + hasard() * 0.05, 0), mat(fleurs[Math.floor(hasard() * fleurs.length)]));
+    f.position.set((hasard() - 0.5) * 0.8, 0.26 + hasard() * 0.08, (hasard() - 0.5) * 0.8);
+    massif.add(f);
+  }
+  ile.add(massif);
+}
+
+// ---------------------------------------------------------------------------
+// Construction de l'île
+// ---------------------------------------------------------------------------
+const construits = [];
+POLES.forEach((p, i) => {
+  const b = pavillon(p, i);
+  construits.push({ spec: p, ...b });
+});
+
+const siege = siegeCentral();
+const atelierOutils = atelierDesAteliers();
+
+// Sanner, gardien du Bastion : statue de bronze à l'entrée du pavillon
+const bastionBat = construits.find(c => c.spec.id === 'cyber').group;
+const sanner = new THREE.Group();
+sanner.position.set(4.6, 0, 5.75);
+sanner.rotation.y = 0.32;
+sanner.scale.setScalar(1.12);
+sanner.add(cyl(0.72, 0.84, 0.3, C.pierre, 0, 0.15, 0, 12, { roughness: 0.9 }));
+sanner.add(cyl(0.5, 0.62, 1.2, 0xa98455, 0, 0.9, 0, 10, { roughness: 0.55, metalness: 0.25 }));
+sanner.add(box(0.6, 0.38, 0.4, 0x9a774c, 0, 1.55, 0, { roughness: 0.55, metalness: 0.25 }));
+const teteS = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 10), mat(0xb39266, { roughness: 0.45, metalness: 0.3 }));
+teteS.position.y = 1.94;
+teteS.castShadow = true;
+sanner.add(teteS);
+sanner.add(box(0.4, 0.06, 0.06, 0xf0e6cc, 0, 1.97, 0.22));
+const bouclier = new THREE.Mesh(new THREE.CylinderGeometry(0.64, 0.64, 0.14, 6), mat(0xe4d7b8, { roughness: 0.55 }));
+bouclier.rotation.z = PI / 2;
+bouclier.position.set(-0.7, 1.3, 0.3);
+bouclier.castShadow = true;
+sanner.add(bouclier);
+sanner.add(box(0.06, 0.52, 0.03, 0x8c6f4e, -0.7, 1.3, 0.38));
+sanner.add(box(0.34, 0.06, 0.03, 0x8c6f4e, -0.7, 1.3, 0.38));
+bastionBat.add(sanner);
+
+// petites conversations sur la place
+const placeVivante = new THREE.Group();
+ile.add(placeVivante);
+agent(placeVivante, 6.5, 5.1, -2.3, false, 9);
+agent(placeVivante, 7.5, 5.9, 0.9, false, 14);
+agent(placeVivante, -6.4, 6.1, 2.5, false, 5);
+agent(placeVivante, -5.5, 5.2, -0.6, false, 17);
+
+// ---------------------------------------------------------------------------
+// Ciel vivant : nuages, oiseaux
+// ---------------------------------------------------------------------------
+const nuages = [];
+const geoNuage = new THREE.SphereGeometry(1, 12, 8);
+const matNuage = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0xe9f2fa, emissiveIntensity: 0.35 });
+const matNuageLoin = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, emissive: 0xe9f2fa, emissiveIntensity: 0.4, transparent: true, opacity: 0.85 });
+
+function nuage(x, y, z, echelle, materiau) {
+  const n = new THREE.Group();
+  const nb = 3 + Math.floor(hasard() * 3);
+  for (let j = 0; j < nb; j++) {
+    const b = new THREE.Mesh(geoNuage, materiau);
+    const s = (2.1 + hasard() * 2.2) * echelle;
+    b.scale.set(s, s * 0.55, s * 0.85);
+    b.position.set((hasard() - 0.5) * 7 * echelle, (hasard() - 0.5) * 1.2 * echelle, (hasard() - 0.5) * 4.5 * echelle);
+    n.add(b);
+  }
+  n.position.set(x, y, z);
+  n.userData.vitesse = 0.25 + hasard() * 0.45;
+  scene.add(n);
+  nuages.push(n);
+}
+
+// sous l'île, pour porter le flottement
+for (let i = 0; i < 5; i++) {
+  const a = hasard() * TAU;
+  const r = 22 + hasard() * 16;
+  nuage(Math.cos(a) * r, -29 - hasard() * 5, Math.sin(a) * r, 0.65 + hasard() * 0.45, matNuage);
+}
+for (let i = 0; i < 5; i++) {
+  const a = hasard() * TAU;
+  const r = 42 + hasard() * 30;
+  nuage(Math.cos(a) * r, -36 - hasard() * 8, Math.sin(a) * r, 1.3 + hasard() * 0.9, matNuage);
+}
+// loin à l'horizon
+for (let i = 0; i < 5; i++) {
+  const a = hasard() * TAU;
+  const r = 150 + hasard() * 70;
+  nuage(Math.cos(a) * r, 6 + hasard() * 26, Math.sin(a) * r, 1.6 + hasard() * 1.2, matNuageLoin);
+}
+
+const oiseaux = [];
+for (let i = 0; i < 5; i++) {
+  const o = new THREE.Group();
+  const a1 = box(0.5, 0.05, 0.06, 0x4c4a44, -0.22, 0, 0);
+  a1.rotation.z = 0.35;
+  const a2 = box(0.5, 0.05, 0.06, 0x4c4a44, 0.22, 0, 0);
+  a2.rotation.z = -0.35;
+  o.add(a1, a2);
+  o.userData = { r: 16 + hasard() * 13, y: 9 + hasard() * 6, phase: hasard() * TAU, vitesse: 0.06 + hasard() * 0.05 };
+  scene.add(o);
+  oiseaux.push(o);
+}
+
+// ---------------------------------------------------------------------------
+// Étiquettes HTML
+// ---------------------------------------------------------------------------
+const conteneurLabels = document.getElementById('labels');
+const labels = [];
+
+function etiquetteLieu(objet, dy, lieu, pole, accent) {
+  const el = document.createElement('div');
+  el.className = 'lbl';
+  el.innerHTML = `
+    <div class="carte-lieu">
+      <div class="trait" style="background:${accent}"></div>
+      <div class="texte">
+        <span class="lieu">${lieu}</span>
+        <span class="pole">${pole}</span>
+      </div>
+    </div>`;
+  conteneurLabels.appendChild(el);
+  labels.push({ el, objet, dy });
+}
+
+// étiquettes des lieux
+construits.forEach(({ spec, group }) => {
+  if (spec.id === 'data' || spec.id === 'bi') return;
+  etiquetteLieu(group, 3.55, spec.lieu, spec.pole, spec.accent);
+});
+etiquetteLieu(siege.group, 3.6, 'Le Quartier Général', 'Direction Générale', '#b08145');
+etiquetteLieu(atelierOutils, 3.4, "L'Atelier des Ateliers", 'Outillage commun', '#8d9a4c');
+
+// Data & IA et BI partagent L'Observatoire : une seule étiquette entre les deux
+const groupeData = construits.find(c => c.spec.id === 'data').group;
+const groupeBi = construits.find(c => c.spec.id === 'bi').group;
+const ancreObservatoire = new THREE.Object3D();
+ancreObservatoire.position.copy(groupeData.position).add(groupeBi.position).multiplyScalar(0.5);
+ile.add(ancreObservatoire);
+etiquetteLieu(ancreObservatoire, 3.7, "L'Observatoire", 'Data & IA · Business Intelligence', '#5f8a9a');
+
+function mesurerLabels() {
+  for (const l of labels) {
+    l.w = l.el.offsetWidth;
+    l.h = l.el.offsetHeight;
+  }
+}
+mesurerLabels();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(mesurerLabels);
+
+// ---------------------------------------------------------------------------
+// Caméra et boucle
+// ---------------------------------------------------------------------------
+function cadrer() {
+  const aspect = window.innerWidth / window.innerHeight;
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = aspect;
+  const recul = aspect < 0.85 ? 1.5 : aspect < 1.2 ? 1.2 : 1;
+  camera.position.set(53 * recul, 50 * recul, 53 * recul);
+  camera.lookAt(0, -4.2, 0);
+  camera.updateProjectionMatrix();
+  mesurerLabels();
+}
+cadrer();
+window.addEventListener('resize', cadrer);
+
+const vProj = new THREE.Vector3();
+const vMonde = new THREE.Vector3();
+
+function mettreAJourLabels() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const actifs = [];
+
+  for (const l of labels) {
+    l.objet.getWorldPosition(vMonde);
+    vProj.copy(vMonde);
+    vProj.y += l.dy;
+    vProj.project(camera);
+    const x = (vProj.x * 0.5 + 0.5) * w;
+    const y = (-vProj.y * 0.5 + 0.5) * h;
+    const visible = vProj.z < 1 && x > -220 && x < w + 220 && y > -100 && y < h + 100;
+    if (!visible) {
+      l.el.style.opacity = '0';
+      continue;
+    }
+    l.ancreX = x;
+    l.ancreY = y;
+    actifs.push(l);
+  }
+
+  // anti-chevauchement : les étiquettes les plus hautes restent, les autres montent
+  actifs.sort((a, b) => a.ancreY - b.ancreY);
+  const poses = [];
+  for (const l of actifs) {
+    const largeur = l.w || 150;
+    const hauteur = l.h || 42;
+    let x = Math.min(Math.max(l.ancreX, largeur / 2 + 10), w - largeur / 2 - 10);
+    let bas = l.ancreY;
+    let bouge = true;
+    let passes = 0;
+    while (bouge && passes < 10) {
+      bouge = false;
+      passes++;
+      for (const p of poses) {
+        const procheX = Math.abs(x - p.x) < (largeur + p.largeur) / 2 + 6;
+        const procheY = bas - hauteur < p.bas && bas > p.haut;
+        if (procheX && procheY) {
+          bas = p.haut - 6;
+          bouge = true;
+        }
+      }
+    }
+    const haut = bas - hauteur;
+    poses.push({ x, haut, bas, largeur });
+    l.el.style.opacity = haut < 8 ? '0' : '1';
+    l.el.style.transform = `translate3d(${(x - largeur / 2).toFixed(1)}px, ${haut.toFixed(1)}px, 0)`;
+  }
+}
+
+const horloge = new THREE.Clock();
+
+let temps = 0;
+function animer() {
+  const dt = Math.min(horloge.getDelta(), 0.1);
+  temps += dt;
+  const t = temps;
+
+  for (const n of nuages) {
+    n.position.x += n.userData.vitesse * dt;
+    if (n.position.x > 110) n.position.x = -110;
+  }
+
+  for (const o of oiseaux) {
+    const u = o.userData;
+    const ang = u.phase + t * u.vitesse;
+    o.position.set(Math.cos(ang) * u.r, u.y + Math.sin(t * 0.6 + u.phase) * 0.6, Math.sin(ang) * u.r);
+    o.rotation.y = -ang;
+    o.children[0].rotation.z = 0.35 + Math.sin(t * 6 + u.phase) * 0.5;
+    o.children[1].rotation.z = -0.35 - Math.sin(t * 6 + u.phase) * 0.5;
+  }
+
+  mettreAJourLabels();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animer);
+}
+
+animer();
+</script>
+</body>
+</html>

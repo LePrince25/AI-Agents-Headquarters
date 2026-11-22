@@ -1,0 +1,186 @@
+[
+  {
+    "slug": "desk",
+    "fichier": "desk.glb",
+    "titre": "Desk",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/6PbVkqPzEU"
+  },
+  {
+    "slug": "desk-angle",
+    "fichier": "desk-angle.glb",
+    "titre": "Desk Corner",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/LCfBX1FVJr"
+  },
+  {
+    "slug": "chaise-bureau",
+    "fichier": "chaise-bureau.glb",
+    "titre": "Desk Chair",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/CKSz6PB1vO"
+  },
+  {
+    "slug": "fauteuil-bureau",
+    "fichier": "fauteuil-bureau.glb",
+    "titre": "Office Chair",
+    "auteur": "Quaternius",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/UfKvrZBK6C"
+  },
+  {
+    "slug": "plante-pot",
+    "fichier": "plante-pot.glb",
+    "titre": "Potted Plant",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/23Dx9CC95C"
+  },
+  {
+    "slug": "plante-haute",
+    "fichier": "plante-haute.glb",
+    "titre": "Houseplant",
+    "auteur": "Quaternius",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/bfLOqIV5uP"
+  },
+  {
+    "slug": "bibliotheque",
+    "fichier": "bibliotheque.glb",
+    "titre": "Bookcase Closed Wide",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/dUd80gOqgO"
+  },
+  {
+    "slug": "canape",
+    "fichier": "canape.glb",
+    "titre": "Lounge Sofa",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/jMu2iCmGxU"
+  },
+  {
+    "slug": "table-ronde",
+    "fichier": "table-ronde.glb",
+    "titre": "Table Round Large",
+    "auteur": "Quaternius",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/eCnblJPsW8"
+  },
+  {
+    "slug": "table-basse",
+    "fichier": "table-basse.glb",
+    "titre": "Coffee Table",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/y4ZU5S7RuD"
+  },
+  {
+    "slug": "ecran",
+    "fichier": "ecran.glb",
+    "titre": "Computer Screen",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/V5Qo141OcB"
+  },
+  {
+    "slug": "portable",
+    "fichier": "portable.glb",
+    "titre": "Laptop",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/GnbwSUiVty"
+  },
+  {
+    "slug": "tapis",
+    "fichier": "tapis.glb",
+    "titre": "Rug Rectangle",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/k5oJLb49gw"
+  },
+  {
+    "slug": "lampadaire",
+    "fichier": "lampadaire.glb",
+    "titre": "Lamp Round Floor",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/8LiDIfXVLi"
+  },
+  {
+    "slug": "machine-cafe",
+    "fichier": "machine-cafe.glb",
+    "titre": "Kitchen Coffee Machine",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/jBUiOz36vs"
+  },
+  {
+    "slug": "coffre-fort",
+    "fichier": "coffre-fort.glb",
+    "titre": "Safe",
+    "auteur": "CreativeTrio",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/N4egHD2Vms"
+  },
+  {
+    "slug": "chevalet",
+    "fichier": "chevalet.glb",
+    "titre": "Easel Large Leaning",
+    "auteur": "reyshapes",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/DzrGZz1LRo"
+  },
+  {
+    "slug": "caisse",
+    "fichier": "caisse.glb",
+    "titre": "Crate",
+    "auteur": "Quaternius",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/3VGWnZPXmG"
+  },
+  {
+    "slug": "banc",
+    "fichier": "banc.glb",
+    "titre": "Bench",
+    "auteur": "Quaternius",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/jLxjFxFRpw"
+  },
+  {
+    "slug": "television",
+    "fichier": "television.glb",
+    "titre": "Television",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/9trLeWoBek"
+  },
+  {
+    "slug": "tableau-liège",
+    "fichier": "tableau-liège.glb",
+    "titre": "Wall Corkboard",
+    "auteur": "CreativeTrio",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/U8yQZ9l0HZ"
+  },
+  {
+    "slug": "imprimante",
+    "fichier": "imprimante.glb",
+    "titre": "Printer",
+    "auteur": "CreativeTrio",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/77K2TCL5Lz"
+  },
+  {
+    "slug": "tasse",
+    "fichier": "tasse.glb",
+    "titre": "Cup Tea",
+    "auteur": "Kenney",
+    "licence": "CC0 1.0",
+    "source": "https://poly.pizza/m/M2sVC8jbmi"
+  }
+]

@@ -1,0 +1,12 @@
+.DS_Store
+node_modules/
+*.log
+.env
+
+# Etat local : jeton du pont Mac et cles API eventuelles des IA ajoutees a la main
+live/pont-jeton.txt
+live/reglages.json
+
+# Travaux produits par les agents : restent sur la machine
+live/travaux/*
+!live/travaux/.gitkeep
