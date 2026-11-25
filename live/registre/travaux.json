@@ -1,0 +1,47 @@
+[
+  {
+    "id": "2178b830-28ec-4b97-9a31-058ee106cb54",
+    "nom": "LePrince Dziedjom",
+    "prenom": "LePrince",
+    "poste": "Directeur Général",
+    "pole": "Direction Générale",
+    "projet": "",
+    "branche": "",
+    "consigne": "Fais une analyse de tous nos projets, la ou nous sommes et ce qui nous reste a faire",
+    "rapport": "",
+    "etat": "erreur",
+    "debut": 1795623543056,
+    "fin": 1795623716502,
+    "cout": 2.194408,
+    "fichiers": {
+      "crees": [
+        "ANALYSE-PROJETS.md"
+      ],
+      "modifies": []
+    },
+    "dossier": "live/travaux/leprince"
+  },
+  {
+    "id": "03ee3116-8966-4520-9630-cafa9b35e04d",
+    "nom": "Yasmine Alimi",
+    "prenom": "Yasmine",
+    "poste": "Directrice Artistique",
+    "pole": "Pôle Sites Vitrines",
+    "projet": "",
+    "branche": "",
+    "dossier": "live/travaux/yasmine",
+    "consigne": "Définir la direction visuelle, les tokens design et la structure responsive de la landing page X ; livrer un mini design system exploitable.",
+    "rapport": "",
+    "etat": "erreur",
+    "debut": 1795629247124,
+    "fin": 1795629478678,
+    "cout": 2.132928,
+    "fichiers": {
+      "crees": [
+        "tokens.css",
+        "compte-rendu.md"
+      ],
+      "modifies": []
+    }
+  }
+]

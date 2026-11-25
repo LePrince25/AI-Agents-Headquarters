@@ -5,7 +5,7 @@ function element(id) {
   return document.getElementById(id);
 }
 
-export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
+export function creerRencontre({ onOuverture, onFermeture, onFin, onDelegation } = {}) {
   let ia = { id: 'claude', nom: 'Claude Code' };
   const el = {
     fenetre: element('fenetre-agent'),
@@ -38,10 +38,15 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
     etatTexte: element('fa-etat-texte'),
     cout: element('fa-cout'),
     journal: element('fa-journal'),
+    texteBloc: element('fa-texte-bloc'),
+    texte: element('fa-texte'),
     rapportBloc: element('fa-rapport-bloc'),
     rapport: element('fa-rapport'),
     fichiersBloc: element('fa-fichiers-bloc'),
     fichiers: element('fa-fichiers'),
+    fichierBloc: element('fa-fichier-bloc'),
+    fichierTitre: element('fa-fichier-titre'),
+    fichierContenu: element('fa-fichier-contenu'),
     boutonsFin: element('fa-boutons-fin'),
     ouvrir: element('fa-ouvrir'),
     autre: element('fa-autre'),
@@ -225,6 +230,7 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
       ]) {
         for (const cheminFichier of liste) {
           const li = document.createElement('li');
+          li.className = 'fichier-ligne';
           const badge = document.createElement('span');
           badge.className = genre === 'modifié' ? 'genre modifie' : 'genre';
           badge.textContent = genre;
@@ -232,6 +238,7 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
           chemin.className = 'chemin';
           chemin.textContent = cheminFichier;
           li.append(badge, chemin);
+          li.addEventListener('click', () => lireFichier(cheminFichier));
           el.fichiers.append(li);
         }
       }
@@ -239,11 +246,25 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
     el.fichiersBloc.hidden = tache.etat === 'en_cours' && !crees.length && !modifies.length;
   }
 
+  async function lireFichier(chemin) {
+    if (!tacheAffichee) return;
+    el.fichierBloc.hidden = false;
+    el.fichierTitre.textContent = chemin;
+    el.fichierContenu.textContent = 'Chargement...';
+    try {
+      const donnees = await appel(`/api/tache/${tacheAffichee}/fichier?chemin=${encodeURIComponent(chemin)}`);
+      el.fichierContenu.textContent = donnees.contenu || '';
+    } catch (err) {
+      el.fichierContenu.textContent = err.message || 'Lecture impossible.';
+    }
+  }
+
   function afficherTache(tache) {
     tacheAffichee = tache.id;
     el.formTache.hidden = true;
     el.suivi.hidden = false;
     afficherErreurTache('');
+    el.fichierBloc.hidden = true;
 
     const etats = {
       en_cours: `${tache.prenom} travaille...`,
@@ -255,6 +276,20 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
     el.cout.textContent = formaterCout(tache.cout);
 
     rangerJournal(tache);
+
+    const texte = Array.isArray(tache.texte) ? tache.texte : [];
+    if (texte.length) {
+      el.texteBloc.hidden = false;
+      el.texte.textContent = '';
+      for (const morceau of texte) {
+        const p = document.createElement('p');
+        p.textContent = texteLisible(morceau);
+        el.texte.append(p);
+      }
+      el.texte.scrollTop = el.texte.scrollHeight;
+    } else {
+      el.texteBloc.hidden = true;
+    }
 
     el.rapport.textContent = texteLisible(tache.rapport || '');
     el.rapportBloc.hidden = !tache.rapport;
@@ -374,6 +409,20 @@ export function creerRencontre({ onOuverture, onFermeture, onFin } = {}) {
     afficherErreurTache('');
     try {
       const tache = await appel('/api/tache', { nom: agent.nom, consigne });
+      if (tache.delegue) {
+        el.formTache.hidden = true;
+        el.suivi.hidden = false;
+        el.etatTexte.textContent = 'LePrince a délégué';
+        el.point.className = 'fini';
+        el.cout.textContent = '';
+        el.journal.textContent = '';
+        const li = document.createElement('li');
+        li.className = 'vide';
+        li.textContent = `${(tache.lancees || []).length} tâche(s) confiée(s) aux agents spécialisés — suis-les dans l'onglet Tâches.`;
+        el.journal.append(li);
+        if (onDelegation) onDelegation(tache);
+        return;
+      }
       actifs.set(tache.nom, tache.id);
       dernieres.set(tache.nom, tache);
       suivis.set(tache.id, { nom: tache.nom, prenom: tache.prenom, notifie: false });

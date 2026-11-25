@@ -70,6 +70,8 @@
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5h7.4l3.4-3.4h5.4a2.7 2.7 0 0 1 0 5.4h-2.5l-1.4 1.4A6.2 6.2 0 1 1 3 13.2z" fill="currentColor"/><circle cx="8.6" cy="13.6" r="1.9" fill="#fbf6ea"/></svg>
     <span>Réunion</span>
   </button>
+  <button class="onglet" type="button" data-panneau="mission">Mission</button>
+  <button class="onglet" type="button" data-panneau="chantiers">Chantiers</button>
   <button class="onglet" type="button" data-panneau="ia">IA</button>
   <button class="onglet" type="button" data-panneau="projets">Projets</button>
   <button class="onglet" type="button" data-panneau="taches" id="onglet-taches">Tâches<i class="pastille" hidden></i></button>
@@ -136,6 +138,10 @@
             <span class="fenetre-cout" id="fa-cout"></span>
           </div>
           <ol class="journal" id="fa-journal" aria-live="polite"></ol>
+          <div class="fenetre-bloc" id="fa-texte-bloc" hidden>
+            <h3>Réponse en direct</h3>
+            <div class="texte-agent" id="fa-texte"></div>
+          </div>
           <div class="fenetre-bloc" id="fa-rapport-bloc" hidden>
             <h3>Compte rendu</h3>
             <p id="fa-rapport"></p>
@@ -143,6 +149,10 @@
           <div class="fenetre-bloc" id="fa-fichiers-bloc" hidden>
             <h3>Fichiers</h3>
             <ul class="fichiers" id="fa-fichiers"></ul>
+          </div>
+          <div class="fenetre-bloc" id="fa-fichier-bloc" hidden>
+            <h3 id="fa-fichier-titre">Fichier</h3>
+            <pre class="fichier-contenu" id="fa-fichier-contenu"></pre>
           </div>
           <div class="fenetre-boutons" id="fa-boutons-fin" hidden>
             <button class="bouton bouton-fort" id="fa-ouvrir" type="button">Ouvrir le dossier</button>

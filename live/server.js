@@ -5,6 +5,7 @@ const path = require('node:path');
 const os = require('node:os');
 const crypto = require('node:crypto');
 const { spawn, execFile } = require('node:child_process');
+const gitOps = require('./git');
 
 const HOST = process.env.HOTE || '127.0.0.1';
 const PORT = Number(process.env.PORT) || 4173;
@@ -12,6 +13,13 @@ const PROJET = path.resolve(__dirname, '..');
 const RACINE = path.join(PROJET, 'site');
 const TRAVAUX = path.join(__dirname, 'travaux');
 const EQUIPE_MD = path.join(PROJET, 'EQUIPE.md');
+const MEMOIRE = path.join(__dirname, 'memoire');
+const REGISTRE = path.join(__dirname, 'registre', 'travaux.json');
+const MEMOIRE_LUE = 6000;
+const MEMOIRE_FICHIER = 32000;
+const REGISTRE_MAX = 200;
+const CHANTIERS = path.join(__dirname, 'registre', 'chantiers.json');
+const CHANTIERS_MAX = 60;
 
 const CLI = process.env.CLAUDE_BIN || 'claude';
 const MODELE = 'sonnet';
@@ -102,6 +110,8 @@ const MIME = {
 const taches = new Map();
 const enfants = new Set();
 let discussions = 0;
+let historique = [];
+let chantiers = [];
 let cacheEquipe = { mtime: 0, agents: new Map() };
 let cacheOutils = { quand: 0, outils: [] };
 let cacheIA = { quand: 0, candidates: [] };
@@ -160,6 +170,62 @@ function slugifier(texte) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'agent';
+}
+
+function cheminMemoire(agent) {
+  return path.join(MEMOIRE, `${agent.slug}.md`);
+}
+
+function lireMemoire(agent) {
+  try {
+    const texte = fs.readFileSync(cheminMemoire(agent), 'utf8').trim();
+    return texte.length > MEMOIRE_LUE ? texte.slice(-MEMOIRE_LUE) : texte;
+  } catch {
+    return '';
+  }
+}
+
+async function ajouterMemoire(agent, consigne, rapport) {
+  const fichier = cheminMemoire(agent);
+  const date = new Date().toISOString().slice(0, 10);
+  const entree = `
+## ${date} — ${resumeTexte(consigne, 120)}
+${resumeTexte(rapport, 900)}
+`;
+  const existant = lireMemoire(agent);
+  const complet = (existant ? existant + entree : entree).trimStart();
+  try {
+    await fsp.mkdir(MEMOIRE, { recursive: true });
+    await fsp.writeFile(fichier, complet.slice(-MEMOIRE_FICHIER), 'utf8');
+  } catch {}
+}
+
+function chargerRegistre() {
+  try {
+    const lu = JSON.parse(fs.readFileSync(REGISTRE, 'utf8'));
+    if (Array.isArray(lu)) historique = lu;
+  } catch {}
+}
+
+async function sauverRegistre() {
+  try {
+    await fsp.mkdir(path.dirname(REGISTRE), { recursive: true });
+    await fsp.writeFile(REGISTRE, JSON.stringify(historique.slice(0, REGISTRE_MAX), null, 2));
+  } catch {}
+}
+
+function chargerChantiers() {
+  try {
+    const lu = JSON.parse(fs.readFileSync(CHANTIERS, 'utf8'));
+    if (Array.isArray(lu)) chantiers = lu;
+  } catch {}
+}
+
+async function sauverChantiers() {
+  try {
+    await fsp.mkdir(path.dirname(CHANTIERS), { recursive: true });
+    await fsp.writeFile(CHANTIERS, JSON.stringify(chantiers.slice(0, CHANTIERS_MAX), null, 2));
+  } catch {}
 }
 
 async function lireEquipe() {
@@ -267,13 +333,27 @@ Tu ne peux rien exécuter pendant cette discussion : aucun outil, aucun fichier,
 Ne prétends jamais avoir fait quelque chose. Si on te confie un vrai travail, invite à utiliser « Confier une tâche ».`;
 }
 
-function consigneSysteme(agent) {
+function consigneSysteme(agent, memoire, info) {
+  const contexte = memoire
+    ? `
+
+Voici un résumé de tes travaux précédents. Utilise-le comme contexte, ne le récite pas.
+
+${memoire}`
+    : '';
+  const surProjet = info && info.projet
+    ? `Tu travailles sur le vrai projet « ${info.projet} » dans le dossier courant, une copie de travail sur la branche « ${info.branche} ».
+Écris et modifie les fichiers directement dans ce dossier. Ne lance pas toi-même de commande git : le serveur prépare la branche et committe tes changements.`
+    : `Tu travailles uniquement dans le dossier courant, live/travaux/${agent.slug}, et tu ne modifies rien en dehors.`;
+  const terminal = info && info.terminal
+    ? ' Tu as accès au terminal pour construire, tester et vérifier ton travail.'
+    : ' Tu n\'as pas de terminal.';
   return `Tu es ${presentation(agent)}.
 Tu travailles chez LePrince WorkLand et le Directeur Général te confie une tâche.
-Tu travailles uniquement dans le dossier courant, live/travaux/${agent.slug}, et tu ne modifies rien en dehors.
-Tu peux lire, écrire et modifier des fichiers, et chercher sur le web. Tu n'as pas de terminal.
+${surProjet}
+Tu peux lire, écrire et modifier des fichiers, et chercher sur le web.${terminal}
 Exécute la tâche sans demander de confirmation, puis termine par un compte rendu court en français :
-ce qui a été fait, les fichiers concernés, et ce qui reste éventuellement à vérifier.`;
+ce qui a été fait, les fichiers concernés, et ce qui reste éventuellement à vérifier.${contexte}`;
 }
 
 async function corpsJson(req) {
@@ -592,6 +672,241 @@ Réponds uniquement par un objet JSON, sans texte autour :
   return { sujet, lignes, decisions: decisions.slice(0, 5), cout };
 }
 
+function trouverAgentParNom(equipe, nom) {
+  const direct = equipe.agents.get(nom);
+  if (direct) return direct;
+  const cible = String(nom).trim();
+  for (const agent of equipe.agents.values()) {
+    if (agent.nom.localeCompare(cible, 'fr', { sensitivity: 'base' }) === 0) return agent;
+  }
+  return null;
+}
+
+async function appelerIA(invite, duree) {
+  const ia = iaActive();
+  let texte = '';
+  let cout = 0;
+  if (ia.id === 'claude') {
+    const args = [
+      '-p', invite,
+      '--output-format', 'json',
+      '--model', MODELE,
+      '--tools', '',
+      '--permission-prompts', 'none',
+      '--no-session-persistence',
+      '--strict-mcp-config',
+      '--settings', REGLAGES,
+    ];
+    const { sortie } = await executerCLI(ia, args, PROJET, duree);
+    let resultat;
+    try {
+      resultat = JSON.parse(sortie);
+    } catch {
+      throw new ErreurApi(502, 'Réponse illisible de Claude Code.');
+    }
+    if (resultat.is_error || typeof resultat.result !== 'string' || !resultat.result.trim()) {
+      throw new ErreurApi(502, 'Claude Code n\'a pas répondu.');
+    }
+    texte = resultat.result.trim();
+    cout = Number(resultat.total_cost_usd) || 0;
+  } else {
+    let args;
+    let dossier = PROJET;
+    let menage = null;
+    if (ia.genre === 'opencode') {
+      args = ['run', invite];
+      if (ia.id === 'opencode') args = ['run', '-m', MODELE_OPENCODE, invite];
+      dossier = await fsp.mkdtemp(path.join(os.tmpdir(), 'qg-'));
+      menage = dossier;
+    } else if (ia.genre === 'codex') {
+      args = ['exec', invite];
+    } else if (ia.genre === 'kimi') {
+      args = ['-p', invite, '--output-format', 'stream-json'];
+      dossier = await fsp.mkdtemp(path.join(os.tmpdir(), 'qg-'));
+      menage = dossier;
+    } else if (ia.genre === 'ollama') {
+      args = ['run', MODELE_OLLAMA, invite];
+    } else if (ia.genre === 'gemini') {
+      args = ['-p', invite];
+    } else {
+      args = [invite];
+      dossier = await fsp.mkdtemp(path.join(os.tmpdir(), 'qg-'));
+      menage = dossier;
+    }
+    try {
+      const { sortie } = await executerCLI(ia, args, dossier, duree);
+      texte = ia.genre === 'kimi' ? reponseKimi(sortie, ia) : reponseTexte(sortie, ia);
+    } finally {
+      if (menage) await fsp.rm(menage, { recursive: true, force: true });
+    }
+  }
+  return { texte, cout };
+}
+
+async function planifierMission(idee) {
+  if (discussions >= MAX_DISCUSSIONS) {
+    throw new ErreurApi(429, 'Trop de discussions en même temps. Patiente un instant.');
+  }
+
+  const equipe = await lireEquipe();
+  const lignes = [];
+  for (const a of equipe.agents.values()) {
+    if (a.pole === 'Direction Générale') continue;
+    const mission = a.missions.length ? ` — ${a.missions[0]}` : '';
+    const lieu = a.lieu ? ` (${a.lieu})` : '';
+    lignes.push(`- ${a.nom} · ${a.poste} · ${a.pole}${lieu}${mission}`);
+  }
+  const saut = `
+`;
+  const roster = lignes.join(saut);
+
+  const invite = `Tu es LePrince Dziedjom, Directeur Général de LePrince WorkLand, un atelier de 30 agents IA qui livrent des produits numériques (APIs, sites vitrines, applications mobiles, SaaS, sécurité, data, ops).
+
+Voici l'équipe :
+${roster}
+
+Une idée vient d'arriver. Transforme-la en plan d'exécution : découpe-la en tâches concrètes et confie chaque tâche à l'agent le plus compétent.
+
+Idée reçue :
+${idee}
+
+Règles :
+- Chaque tâche est confiée à UN agent précis dont le nom complet figure dans la liste (jamais au DG).
+- La consigne est courte et actionnable : ce qu'il faut produire et le résultat attendu.
+- « ordre » est un entier croissant ; si une tâche dépend d'une autre, mets le nom de l'agent qui la précède dans « depend_de » (sinon tableau vide).
+- Reste réaliste : 3 à 8 tâches maximum, uniquement celles qui servent.
+
+Réponds uniquement par un objet JSON, sans texte autour :
+{"objectif":"une phrase","taches":[{"agent":"Nom Complet","consigne":"...","ordre":1,"depend_de":[]}]}`;
+
+  discussions += 1;
+  let texte = '';
+  let cout = 0;
+  try {
+    const reponse = await appelerIA(invite, DUREE_MAX_REUNION);
+    texte = reponse.texte;
+    cout = reponse.cout;
+  } finally {
+    discussions -= 1;
+  }
+
+  const brut = extraireJSON(texte);
+  if (!brut || !Array.isArray(brut.taches) || !brut.taches.length) {
+    throw new ErreurApi(502, `${iaActive().nom} n'a pas produit de plan exploitable.`);
+  }
+
+  const taches = [];
+  for (const t of brut.taches.slice(0, 12)) {
+    if (!t || typeof t !== 'object') continue;
+    const nom = texteCourt(t.agent, 80);
+    const consigne = texteCourt(t.consigne, 2000);
+    if (!nom || !consigne) continue;
+    const agent = trouverAgentParNom(equipe, nom);
+    if (!agent) continue;
+    if (taches.some((x) => x.agent === agent.nom)) continue;
+    taches.push({
+      agent: agent.nom,
+      prenom: agent.prenom,
+      poste: agent.poste,
+      pole: agent.pole,
+      lieu: agent.lieu,
+      consigne,
+      ordre: Number.isFinite(Number(t.ordre)) ? Number(t.ordre) : taches.length + 1,
+      depend_de: Array.isArray(t.depend_de)
+        ? t.depend_de.map((d) => texteCourt(d, 80)).filter(Boolean)
+        : [],
+    });
+  }
+  if (!taches.length) {
+    throw new ErreurApi(502, `${iaActive().nom} n'a assigné aucune tâche à un agent connu.`);
+  }
+  taches.sort((a, b) => a.ordre - b.ordre);
+  return { objectif: texteCourt(brut.objectif, 300), taches, cout };
+}
+
+async function lancerMission(taches) {
+  const equipe = await lireEquipe();
+  const lancees = [];
+  const refus = [];
+  for (const t of taches) {
+    const nom = texteCourt(t && t.agent, 80);
+    const consigne = texteCourt(t && t.consigne, 4000);
+    if (!nom || !consigne) continue;
+    const agent = trouverAgentParNom(equipe, nom);
+    if (!agent) {
+      refus.push({ agent: nom, raison: 'Agent inconnu.' });
+      continue;
+    }
+    try {
+      const tache = await demarrerTache(agent, consigne);
+      lancees.push(etatTache(tache));
+    } catch (err) {
+      refus.push({ agent: nom, raison: err instanceof ErreurApi ? err.message : 'Lancement impossible.' });
+    }
+  }
+  return { lancees, refus };
+}
+
+async function creerChantier(idee, projet) {
+  const plan = await planifierMission(projet ? `${idee} (projet concerné : ${projet})` : idee);
+  const chantier = {
+    id: crypto.randomUUID(),
+    nom: resumeTexte(plan.objectif || idee, 60),
+    objectif: plan.objectif || idee,
+    projet: projet || '',
+    cree: Date.now(),
+    etat: 'en_cours',
+    cout: plan.cout || 0,
+    etapes: plan.taches.map((t) => ({
+      pole: t.pole,
+      lieu: t.lieu,
+      agent: t.agent,
+      prenom: t.prenom,
+      poste: t.poste,
+      consigne: t.consigne,
+      ordre: t.ordre,
+      depend_de: t.depend_de,
+      etat: 'en_attente',
+      tacheId: null,
+    })),
+  };
+  chantiers.unshift(chantier);
+  if (chantiers.length > CHANTIERS_MAX) chantiers = chantiers.slice(0, CHANTIERS_MAX);
+  await sauverChantiers();
+  return chantier;
+}
+
+async function lancerEtapeChantier(chantier) {
+  if (chantier.etapes.some((e) => e.etat === 'en_cours')) {
+    throw new ErreurApi(409, 'Une étape est déjà en cours. Attends qu\'elle finisse avant de lancer la suivante.');
+  }
+  const idx = chantier.etapes.findIndex((e) => e.etat === 'en_attente');
+  if (idx === -1) {
+    throw new ErreurApi(409, 'Aucune étape en attente : tout est lancé, validé ou terminé.');
+  }
+  const etape = chantier.etapes[idx];
+  const equipe = await lireEquipe();
+  const agent = trouverAgentParNom(equipe, etape.agent);
+  if (!agent) throw new ErreurApi(404, `Agent introuvable : ${etape.agent}`);
+  const tache = await demarrerTache(agent, etape.consigne, { lien: { chantierId: chantier.id, etapeIndex: idx }, projet: chantier.projet });
+  etape.etat = 'en_cours';
+  etape.tacheId = tache.id;
+  etape.branche = tache.branche || '';
+  await sauverChantiers();
+  return { chantier, tache: etatTache(tache) };
+}
+
+async function validerEtapeChantier(chantier) {
+  const idx = chantier.etapes.findIndex((e) => e.etat === 'a_valider');
+  if (idx === -1) {
+    throw new ErreurApi(409, 'Aucune étape prête à être validée. Lance-la et attends sa fin.');
+  }
+  chantier.etapes[idx].etat = 'validee';
+  if (chantier.etapes.every((e) => e.etat === 'validee')) chantier.etat = 'termine';
+  await sauverChantiers();
+  return chantier;
+}
+
 function cheminCourt(chemin, dossier) {
   if (!chemin) return '';
   const relatif = path.relative(dossier, chemin);
@@ -630,9 +945,13 @@ function traiterLigne(tache, ligne) {
 
   if (evenementBrut.type === 'assistant' && Array.isArray(evenementBrut.message?.content)) {
     for (const bloc of evenementBrut.message.content) {
-      if (bloc.type !== 'tool_use') continue;
-      const entree = bloc.input && typeof bloc.input === 'object' ? bloc.input : {};
-      evenement(tache, String(bloc.name || 'Outil'), nommerOutil(bloc.name, entree, tache.dossier));
+      if (bloc.type === 'text' && typeof bloc.text === 'string' && bloc.text.trim()) {
+        tache.lignes.push(bloc.text.trim());
+        if (tache.lignes.length > 200) tache.lignes.splice(0, tache.lignes.length - 200);
+      } else if (bloc.type === 'tool_use') {
+        const entree = bloc.input && typeof bloc.input === 'object' ? bloc.input : {};
+        evenement(tache, String(bloc.name || 'Outil'), nommerOutil(bloc.name, entree, tache.dossier));
+      }
     }
     return;
   }
@@ -713,8 +1032,72 @@ async function terminerTache(tache, code) {
     tache.etat = 'erreur';
     tache.erreur = `${tache.iaNom || 'L\'IA'} s'est arrêtée avec le code ${code}.`;
   }
+
+  try {
+    const saut = `
+`;
+    const contenu = [
+      `# Compte rendu — ${tache.prenom} (${tache.poste})`,
+      ``,
+      `**Tâche :** ${tache.consigne}`,
+      `**État :** ${tache.etat}`,
+      `**Coût :** ${tache.cout ? tache.cout + ' $' : '-'}`,
+      tache.projet ? `**Projet :** ${tache.projet} · **Branche :** ${tache.branche}` : '',
+      ``,
+      `## Résultat`,
+      tache.rapport,
+      ``,
+      `## Fichiers`,
+      ...tache.fichiers.crees.map((f) => '- créé : ' + f),
+      ...tache.fichiers.modifies.map((f) => '- modifié : ' + f),
+    ].join(saut);
+    await fsp.writeFile(path.join(tache.dossier, 'compte-rendu.md'), contenu, 'utf8');
+    if (!tache.fichiers.crees.includes('compte-rendu.md')) tache.fichiers.crees.push('compte-rendu.md');
+  } catch (err) {
+    console.error(`[compte-rendu] écriture impossible : ${err.message}`);
+  }
+
   tache.fin = Date.now();
   console.log(`[tache] ${tache.nom} : ${tache.etat} (${tache.fichiers.crees.length} créé(s))`);
+
+  await ajouterMemoire(tache.agent, tache.consigne, tache.rapport || '');
+  historique.push({
+    id: tache.id,
+    nom: tache.nom,
+    prenom: tache.prenom,
+    poste: tache.poste,
+    pole: tache.pole,
+    projet: tache.projet || '',
+    branche: tache.branche || '',
+    dossier: cheminCourt(tache.dossier, PROJET),
+    consigne: resumeTexte(tache.consigne, 180),
+    rapport: resumeTexte(tache.rapport, 240),
+    etat: tache.etat,
+    debut: tache.debut,
+    fin: tache.fin,
+    cout: tache.cout,
+    fichiers: tache.fichiers || { crees: [], modifies: [] },
+  });
+  if (historique.length > REGISTRE_MAX) historique = historique.slice(-REGISTRE_MAX);
+  await sauverRegistre();
+
+  if (tache.projet && tache.branche) {
+    try {
+      const hash = await gitOps.committer(tache.dossier, `qg(${tache.prenom}) : ${resumeTexte(tache.consigne, 60)}`);
+      tache.commit = hash ? String(hash).slice(0, 12) : '';
+    } catch (err) {
+      console.error(`[git] commit impossible : ${err.message}`);
+    }
+  }
+
+  if (tache.lien && tache.lien.chantierId) {
+    const chantier = chantiers.find((c) => c.id === tache.lien.chantierId);
+    const etape = chantier && chantier.etapes[tache.lien.etapeIndex];
+    if (etape && etape.etat === 'en_cours') {
+      etape.etat = 'a_valider';
+      await sauverChantiers();
+    }
+  }
 }
 
 function traiterLigneKimi(tache, ligne) {
@@ -758,6 +1141,8 @@ function lancerTache(tache) {
   const ia = iaActive();
   tache.ia = ia.id;
   tache.iaNom = ia.nom;
+  const infoTache = { projet: tache.projet, branche: tache.branche, terminal: tache.terminal };
+  const outilsTache = tache.terminal ? `${OUTILS},Bash` : OUTILS;
   let args;
   if (ia.id === 'claude') {
     args = [
@@ -765,18 +1150,18 @@ function lancerTache(tache) {
       '--output-format', 'stream-json',
       '--verbose',
       '--model', MODELE,
-      '--tools', OUTILS,
-      '--allowedTools', OUTILS,
+      '--tools', outilsTache,
+      '--allowedTools', outilsTache,
       '--permission-mode', 'acceptEdits',
       '--permission-prompts', 'none',
       '--max-budget-usd', BUDGET,
       '--no-session-persistence',
       '--strict-mcp-config',
       '--settings', REGLAGES,
-      '--append-system-prompt', consigneSysteme(tache.agent),
+      '--append-system-prompt', consigneSysteme(tache.agent, tache.memoire, infoTache),
     ];
   } else {
-    const invite = `${tache.consigne}\n\n${consigneSysteme(tache.agent)}`;
+    const invite = `${tache.consigne}\n\n${consigneSysteme(tache.agent, tache.memoire, infoTache)}`;
     if (ia.genre === 'opencode') {
       args = ia.id === 'opencode' ? ['run', '-m', MODELE_OPENCODE, invite] : ['run', invite];
     } else if (ia.genre === 'codex') {
@@ -875,16 +1260,28 @@ function etatTache(tache) {
     lieu: tache.lieu,
     ia: tache.iaNom || '',
     consigne: tache.consigne,
-    dossier: `live/travaux/${tache.agent.slug}`,
+    dossier: cheminCourt(tache.dossier, PROJET),
+    projet: tache.projet || '',
+    branche: tache.branche || '',
+    commit: tache.commit || '',
     etat: tache.etat,
     debut: tache.debut,
     fin: tache.fin,
     cout: tache.cout,
     evenements: tache.evenements.slice(-150),
     rapport: tache.rapport,
+    texte: tache.lignes ? tache.lignes.slice(-40) : [],
     fichiers: tache.fichiers,
     erreur: tache.erreur,
   };
+}
+
+function trouverTache(id) {
+  const active = taches.get(id);
+  if (active) return { dossier: active.dossier };
+  const fini = historique.find((h) => h.id === id);
+  if (fini && fini.dossier) return { dossier: path.resolve(PROJET, fini.dossier) };
+  return null;
 }
 
 function tachesActives() {
@@ -912,7 +1309,7 @@ function resumeTexte(texte, max) {
 }
 
 function tachesTerminees() {
-  return [...taches.values()]
+  const recents = [...taches.values()]
     .filter((t) => t.etat !== 'en_cours' && t.fin)
     .sort((a, b) => b.fin - a.fin)
     .slice(0, 8)
@@ -930,6 +1327,16 @@ function tachesTerminees() {
       cout: t.cout,
       fichiers: t.fichiers || { crees: [], modifies: [] },
     }));
+
+  const vus = new Set(recents.map((t) => t.id));
+  const fusion = recents.slice();
+  for (const entree of historique) {
+    if (vus.has(entree.id)) continue;
+    fusion.push(entree);
+    vus.add(entree.id);
+  }
+  fusion.sort((a, b) => (b.fin || 0) - (a.fin || 0));
+  return fusion.slice(0, 12);
 }
 
 function listerOutils() {
@@ -1112,7 +1519,7 @@ async function listerProjets() {
   return projets;
 }
 
-async function demarrerTache(agent, consigne) {
+async function demarrerTache(agent, consigne, options = {}) {
   const enCours = [...taches.values()].filter((t) => t.etat === 'en_cours');
   if (enCours.length >= MAX_TACHES) {
     throw new ErreurApi(429, `Les ${MAX_TACHES} tâches simultanées sont déjà en cours.`);
@@ -1121,9 +1528,34 @@ async function demarrerTache(agent, consigne) {
     throw new ErreurApi(409, `${agent.prenom} a déjà une tâche en cours.`);
   }
 
-  const dossier = path.join(TRAVAUX, agent.slug);
+  const lien = options.lien || null;
+  const terminal = !!options.terminal;
+  const projetNom = options.projet ? texteCourt(options.projet, 80) : '';
+
+  let dossier = path.join(TRAVAUX, agent.slug);
+  let projet = '';
+  let branche = '';
+
+  if (projetNom) {
+    const chemin = path.join(RACINE_PROJETS, projetNom);
+    const stat = await fsp.stat(chemin).catch(() => null);
+    if (stat && stat.isDirectory() && (await gitOps.estRepo(chemin))) {
+      try {
+        const prep = await gitOps.preparerBranche(chemin, agent.slug);
+        dossier = prep.dossier;
+        branche = prep.branche;
+        projet = projetNom;
+      } catch (err) {
+        console.error(`[git] worktree impossible pour ${projetNom} : ${err.message}`);
+      }
+    } else {
+      console.error(`[git] ${projetNom} n'est pas un dépôt git lisible — repli sur le bac à sable.`);
+    }
+  }
+
   await fsp.mkdir(dossier, { recursive: true });
   const avant = await instantane(dossier);
+  const memoire = lireMemoire(agent);
 
   const tache = {
     id: crypto.randomUUID(),
@@ -1133,8 +1565,13 @@ async function demarrerTache(agent, consigne) {
     pole: agent.pole,
     lieu: agent.lieu,
     agent,
+    memoire,
     dossier,
     consigne,
+    lien,
+    projet,
+    branche,
+    terminal,
     etat: 'en_cours',
     debut: Date.now(),
     fin: null,
@@ -1151,7 +1588,7 @@ async function demarrerTache(agent, consigne) {
   };
 
   taches.set(tache.id, tache);
-  console.log(`[tache] ${agent.prenom} démarre : ${consigne.slice(0, 80)}`);
+  console.log('[tache] ' + agent.prenom + ' démarre' + (projet ? ' sur ' + projet + ' (' + branche + ')' : '') + ' : ' + consigne.slice(0, 80));
   lancerTache(tache);
   return tache;
 }
@@ -1199,6 +1636,21 @@ async function gererApi(req, res, chemin) {
 
   if (req.method === 'GET' && chemin === '/api/taches') {
     json(res, 200, { taches: tachesActives(), termine: tachesTerminees() });
+    return;
+  }
+
+  if (req.method === 'GET' && chemin === '/api/equipe') {
+    const equipe = await lireEquipe();
+    const agents = [...equipe.agents.values()].map((a) => ({
+      nom: a.nom,
+      prenom: a.prenom,
+      poste: a.poste,
+      pole: a.pole,
+      lieu: a.lieu,
+      missions: a.missions,
+      outils: a.outils,
+    }));
+    json(res, 200, { agents });
     return;
   }
 
@@ -1296,6 +1748,29 @@ async function gererApi(req, res, chemin) {
     return;
   }
 
+  const fichierTache = chemin.match(/^\/api\/tache\/([0-9a-f-]+)\/fichier$/);
+  if (req.method === 'GET' && fichierTache) {
+    const info = trouverTache(fichierTache[1]);
+    if (!info) throw new ErreurApi(404, 'Tâche introuvable.');
+    const dossier = info.dossier;
+    const url = new URL(req.url, `http://${HOST}`);
+    const relatif = texteCourt(url.searchParams.get('chemin') || '', 500);
+    if (!relatif) throw new ErreurApi(400, 'Chemin de fichier requis.');
+    const cible = path.resolve(dossier, relatif);
+    if (cible !== dossier && !cible.startsWith(dossier + path.sep)) {
+      throw new ErreurApi(403, 'Fichier refusé.');
+    }
+    if (cible !== TRAVAUX && !cible.startsWith(TRAVAUX + path.sep)) {
+      throw new ErreurApi(403, 'Fichier refusé.');
+    }
+    const stat = await fsp.stat(cible).catch(() => null);
+    if (!stat || !stat.isFile()) throw new ErreurApi(404, 'Fichier introuvable.');
+    if (stat.size > 200 * 1024) throw new ErreurApi(413, 'Fichier trop lourd à afficher (200 Ko max).');
+    const contenu = await fsp.readFile(cible, 'utf8');
+    json(res, 200, { chemin: relatif, contenu });
+    return;
+  }
+
   const detail = chemin.match(/^\/api\/tache\/([0-9a-f-]+)$/);
   if (req.method === 'GET' && detail) {
     const tache = taches.get(detail[1]);
@@ -1342,6 +1817,65 @@ async function gererApi(req, res, chemin) {
     return;
   }
 
+  if (req.method === 'POST' && chemin === '/api/mission') {
+    const corps = await corpsJson(req);
+    const idee = texteCourt(corps.idee, 3000);
+    if (!idee) throw new ErreurApi(400, 'Décris ton idée ou ta mission.');
+    const plan = await planifierMission(idee);
+    json(res, 200, plan);
+    return;
+  }
+
+  if (req.method === 'POST' && chemin === '/api/mission/lancer') {
+    const corps = await corpsJson(req);
+    const taches = Array.isArray(corps.taches) ? corps.taches.slice(0, MAX_TACHES) : [];
+    if (!taches.length) throw new ErreurApi(400, 'Aucune tâche à lancer.');
+    const resultat = await lancerMission(taches);
+    json(res, 202, resultat);
+    return;
+  }
+
+  if (req.method === 'GET' && chemin === '/api/chantiers') {
+    json(res, 200, { chantiers });
+    return;
+  }
+
+  if (req.method === 'POST' && chemin === '/api/chantier') {
+    const corps = await corpsJson(req);
+    const idee = texteCourt(corps.idee, 3000);
+    if (!idee) throw new ErreurApi(400, 'Décris ton idée ou ta mission.');
+    const projet = texteCourt(corps.projet, 80);
+    const chantier = await creerChantier(idee, projet);
+    json(res, 201, chantier);
+    return;
+  }
+
+  const lancerChantier = chemin.match(/^\/api\/chantier\/([0-9a-f-]+)\/lancer$/);
+  if (req.method === 'POST' && lancerChantier) {
+    const chantier = chantiers.find((c) => c.id === lancerChantier[1]);
+    if (!chantier) throw new ErreurApi(404, 'Chantier introuvable.');
+    const resultat = await lancerEtapeChantier(chantier);
+    json(res, 202, resultat);
+    return;
+  }
+
+  const validerChantier = chemin.match(/^\/api\/chantier\/([0-9a-f-]+)\/valider$/);
+  if (req.method === 'POST' && validerChantier) {
+    const chantier = chantiers.find((c) => c.id === validerChantier[1]);
+    if (!chantier) throw new ErreurApi(404, 'Chantier introuvable.');
+    const maj = await validerEtapeChantier(chantier);
+    json(res, 200, maj);
+    return;
+  }
+
+  const detailChantier = chemin.match(/^\/api\/chantier\/([0-9a-f-]+)$/);
+  if (req.method === 'GET' && detailChantier) {
+    const chantier = chantiers.find((c) => c.id === detailChantier[1]);
+    if (!chantier) throw new ErreurApi(404, 'Chantier introuvable.');
+    json(res, 200, chantier);
+    return;
+  }
+
   if (req.method === 'POST' && chemin === '/api/tache') {
     const corps = await corpsJson(req);
     const nom = texteCourt(corps.nom, 80);
@@ -1352,7 +1886,23 @@ async function gererApi(req, res, chemin) {
     const agent = equipe.agents.get(nom);
     if (!agent) throw new ErreurApi(404, 'Agent inconnu.');
 
-    const tache = await demarrerTache(agent, consigne);
+    if (agent.pole === 'Direction Générale') {
+      const plan = await planifierMission(consigne);
+      const resultat = await lancerMission(plan.taches);
+      json(res, 202, {
+        delegue: true,
+        objectif: plan.objectif,
+        taches: plan.taches,
+        lancees: resultat.lancees,
+        refus: resultat.refus,
+      });
+      return;
+    }
+
+    const tache = await demarrerTache(agent, consigne, {
+      projet: texteCourt(corps.projet, 80),
+      terminal: !!corps.terminal,
+    });
     json(res, 202, etatTache(tache));
     return;
   }
@@ -1467,8 +2017,12 @@ serveur.on('error', (err) => {
   process.exit(1);
 });
 
+chargerRegistre();
+chargerChantiers();
+
 serveur.listen(PORT, HOST, () => {
   console.log(`QG en ligne sur http://${HOST}:${PORT}/`);
   console.log('Seul cet ordinateur peut y accéder. Ctrl+C pour arrêter.');
   console.log(`Claude Code : ${CLI} - discussions sans outil - tâches ${MODELE} plafonnées à ${BUDGET} $.`);
+  console.log(`Mémoire par agent dans live/memoire/ · registre ${historique.length} travaux dans live/registre/travaux.json`);
 });

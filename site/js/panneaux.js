@@ -7,6 +7,8 @@ const TITRES = {
   poles: { sur: 'Le quartier', titre: 'Pôles et lieux' },
   equipe: { sur: 'En direct', titre: "Ce que fait l'équipe" },
   reunion: { sur: 'Salle de réunion', titre: 'Convoquer une réunion' },
+  mission: { sur: 'Lancement', titre: "Découper une idée en tâches" },
+  chantiers: { sur: 'Agence', titre: 'Les chantiers' },
   ia: { sur: "Choix de l'IA", titre: 'Mes IA et connecteurs' },
   projets: { sur: 'En développement', titre: 'Projets en cours' },
   taches: { sur: 'Bureau du CEO', titre: 'Les travaux des agents' },
@@ -31,7 +33,7 @@ function bouton(texte, classe) {
   return b;
 }
 
-export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerLieu, voirTache } = {}) {
+export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerLieu, voirTache, voirAgent } = {}) {
   const onglets = document.getElementById('onglets');
   const panneau = document.getElementById('panneau');
   const sur = document.getElementById('panneau-sur');
@@ -49,6 +51,9 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
   let reunionActive = false;
   let sujetReunion = '';
   let tachesEnCours = 0;
+  let chantierVue = null;
+  let equipeComplete = null;
+  let apercuFichier = null;
 
   function badgeTaches(nombre) {
     tachesEnCours = nombre;
@@ -180,7 +185,8 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
     vider();
     const resume = balise('div', 'equipe-resume');
     const liste = balise('div', 'equipe-liste');
-    corps.append(resume, liste);
+    const fiche = balise('div', 'equipe-fiche');
+    corps.append(resume, liste, fiche);
 
     for (const a of agents) {
       const ligne = document.createElement('button');
@@ -195,13 +201,46 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
       const activite = balise('span', 'equipe-activite');
       ligne.append(point, identite, poste, lieu, activite);
       ligne.addEventListener('click', () => {
-        if (voirLieu) voirLieu(a.poleId);
+        if (voirAgent) voirAgent(a.nom);
+        else if (voirLieu) voirLieu(a.poleId);
+        montrerFiche(a.nom);
       });
       liste.append(ligne);
       lignesEquipe.set(a.nom, { ligne, point, activite });
     }
 
     majEquipe();
+  }
+
+  async function chargerEquipe() {
+    try {
+      const donnees = await appel('/api/equipe');
+      equipeComplete = new Map((donnees.agents || []).map((a) => [a.nom, a]));
+    } catch {
+      equipeComplete = null;
+    }
+  }
+
+  async function montrerFiche(nom) {
+    if (!equipeComplete) await chargerEquipe();
+    const zone = corps.querySelector('.equipe-fiche');
+    if (!zone) return;
+    zone.textContent = '';
+    const a = equipeComplete && equipeComplete.get(nom);
+    if (!a) {
+      zone.append(balise('p', 'panneau-note', 'Fiche indisponible (serveur du QG requis).'));
+      return;
+    }
+    zone.append(balise('b', 'equipe-fiche-nom', a.nom));
+    zone.append(balise('span', 'equipe-fiche-poste', `${a.poste} · ${a.pole}${a.lieu ? ' · ' + a.lieu : ''}`));
+    if (a.missions && a.missions.length) {
+      zone.append(balise('h4', '', 'Missions'));
+      for (const m of a.missions) zone.append(balise('p', 'equipe-fiche-mission', m));
+    }
+    if (a.outils) {
+      zone.append(balise('h4', '', 'Outils'));
+      zone.append(balise('p', 'equipe-fiche-outils', a.outils));
+    }
   }
 
   function majEquipe() {
@@ -759,6 +798,22 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
     });
     meta.append(voir);
     carte.append(meta);
+
+    if (!active) {
+      const crees = t.fichiers?.crees || [];
+      const modifies = t.fichiers?.modifies || [];
+      const tous = [...crees.map((f) => [f, 'créé']), ...modifies.map((f) => [f, 'modifié'])];
+      if (tous.length) {
+        const zone = balise('div', 'tache-fichiers');
+        for (const [f, genre] of tous) {
+          const b = balise('button', 'tache-fichier', `${genre} · ${f}`);
+          b.type = 'button';
+          b.addEventListener('click', () => lireFichierTache(t.id, f));
+          zone.append(b);
+        }
+        carte.append(zone);
+      }
+    }
     return carte;
   }
 
@@ -797,6 +852,10 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
       for (const t of termine) blocFin.append(carteTache(t, false));
     }
     corps.append(blocFin);
+    const apercu = balise('pre', 'tache-apercu');
+    apercu.hidden = true;
+    corps.append(apercu);
+    majApercu();
     ajouterNote('Le tableau se rafraîchit tout seul. Une notification arrive à chaque tâche terminée.');
   }
 
@@ -806,6 +865,342 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
       badgeTaches(Array.isArray(donnees.taches) ? donnees.taches.length : 0);
     } catch {
       // la pastille reste sur sa dernière valeur
+    }
+  }
+
+  function majApercu() {
+    const apercu = corps.querySelector('.tache-apercu');
+    if (!apercu) return;
+    if (!apercuFichier) {
+      apercu.hidden = true;
+      return;
+    }
+    apercu.hidden = false;
+    apercu.textContent = apercuFichier.contenu;
+  }
+
+  async function lireFichierTache(id, chemin) {
+    const apercu = corps.querySelector('.tache-apercu');
+    if (!apercu) return;
+    apercu.hidden = false;
+    apercu.textContent = 'Chargement de ' + chemin + '...';
+    try {
+      const donnees = await appel(`/api/tache/${id}/fichier?chemin=${encodeURIComponent(chemin)}`);
+      apercuFichier = { contenu: donnees.contenu || '' };
+    } catch (err) {
+      apercuFichier = { contenu: err.message || 'Lecture impossible.' };
+    }
+    majApercu();
+  }
+
+  // --- Mission ---
+
+  function dessinerPlan(plan) {
+    const bloc = balise('div', 'mission-plan');
+    if (plan.objectif) {
+      bloc.append(balise('p', 'mission-objectif', `Objectif : ${texteLisible(plan.objectif)}`));
+    }
+
+    const taches = Array.isArray(plan.taches) ? plan.taches : [];
+    const cochées = new Set(taches.map((t) => t.agent));
+    const liste = balise('div', 'mission-taches');
+    for (const t of taches) {
+      const item = balise('label', 'mission-tache');
+      const caseC = document.createElement('input');
+      caseC.type = 'checkbox';
+      caseC.checked = true;
+      caseC.value = t.agent;
+      const texte = balise('span', 'mission-texte');
+      texte.append(balise('b', '', `${t.prenom} — ${t.poste}`));
+      texte.append(balise('span', 'mission-pole', t.pole || ''));
+      texte.append(balise('p', 'mission-consigne', texteLisible(t.consigne || '')));
+      item.append(caseC, texte);
+      caseC.addEventListener('change', () => {
+        if (caseC.checked) cochées.add(t.agent);
+        else cochées.delete(t.agent);
+        majCompte();
+      });
+      liste.append(item);
+    }
+    bloc.append(liste);
+
+    const pied = balise('div', 'mission-pied');
+    const lancer = bouton('', 'petit-bouton petit-fort');
+    const note = balise('p', 'panneau-note');
+    pied.append(lancer, note);
+    bloc.append(pied);
+
+    function majCompte() {
+      const n = cochées.size;
+      lancer.textContent = `Lancer ${n} tâche${n > 1 ? 's' : ''}`;
+      lancer.disabled = n === 0;
+    }
+    majCompte();
+
+    lancer.addEventListener('click', async () => {
+      const choisies = taches.filter((t) => cochées.has(t.agent));
+      if (!choisies.length) return;
+      lancer.disabled = true;
+      note.textContent = 'Lancement des agents...';
+      try {
+        const res = await appel('/api/mission/lancer', {
+          taches: choisies.map((t) => ({ agent: t.agent, consigne: t.consigne })),
+        });
+        const lancees = Array.isArray(res.lancees) ? res.lancees : [];
+        const refus = Array.isArray(res.refus) ? res.refus : [];
+        const texte = refus.length
+          ? `${lancees.length} lancée${lancees.length > 1 ? 's' : ''}, ${refus.length} refusée${refus.length > 1 ? 's' : ''}.`
+          : `${lancees.length} tâche${lancees.length > 1 ? 's' : ''} confiée${lancees.length > 1 ? 's' : ''} aux agents.`;
+        notifier({ titre: 'Mission lancée', texte, accent: '#4f8f5d' });
+        fermer();
+        ouvrir('taches');
+      } catch (err) {
+        note.textContent = texteLisible(String(err.message || ''));
+        lancer.disabled = false;
+      }
+    });
+
+    if (plan.cout) {
+      bloc.append(balise('p', 'panneau-note', `Coût de la planification : ${formaterCout(plan.cout)}`));
+    }
+    return bloc;
+  }
+
+  async function dessinerMission() {
+    vider();
+    corps.append(
+      balise(
+        'p',
+        'panneau-intro',
+        'Décris une idée ou une mission. LePrince la découpe en tâches et l\'assigne aux bons agents.'
+      )
+    );
+
+    const champ = balise('label', 'reunion-sujet');
+    champ.append(balise('span', 'reunion-etiquette', 'Ton idée, en une ou deux phrases'));
+    const saisie = balise('textarea', 'mission-saisie');
+    saisie.rows = 3;
+    saisie.maxLength = 3000;
+    saisie.placeholder = 'Ex. Créer une landing page avec paiement pour le nouveau produit X';
+    champ.append(saisie);
+    corps.append(champ);
+
+    const decouper = bouton('Découper en tâches', 'petit-bouton petit-fort');
+    corps.append(decouper);
+
+    const zone = balise('div', 'mission-zone');
+    corps.append(zone);
+
+    const demander = async () => {
+      const idee = saisie.value.trim();
+      if (!idee) return;
+      decouper.disabled = true;
+      zone.textContent = '';
+      zone.append(balise('p', 'panneau-note', 'LePrince découpe l\'idée...'));
+      try {
+        const plan = await appel('/api/mission', { idee });
+        if (ouvert !== 'mission') return;
+        zone.textContent = '';
+        zone.append(dessinerPlan(plan));
+      } catch (err) {
+        zone.textContent = '';
+        zone.append(balise('p', 'panneau-note', texteLisible(String(err.message || ''))));
+      }
+      decouper.disabled = false;
+    };
+
+    decouper.addEventListener('click', demander);
+    saisie.addEventListener('keydown', (evenement) => {
+      if (evenement.key === 'Enter' && (evenement.metaKey || evenement.ctrlKey)) demander();
+    });
+  }
+
+  // --- Chantiers ---
+
+  const ETAPE_BADGES = {
+    en_attente: { libelle: 'En attente', classe: 'attente' },
+    en_cours: { libelle: 'En cours', classe: 'encours' },
+    a_valider: { libelle: 'À valider', classe: 'avalider' },
+    validee: { libelle: 'Validée', classe: 'validee' },
+  };
+
+  function badgeEtape(etat) {
+    const b = balise('span', 'etape-badge ' + ((ETAPE_BADGES[etat] || {}).classe || ''));
+    b.textContent = (ETAPE_BADGES[etat] || {}).libelle || etat;
+    return b;
+  }
+
+  function dessinerChantierDetail(c) {
+    vider();
+    const retour = bouton('‹ Retour aux chantiers', 'petit-bouton');
+    retour.addEventListener('click', () => {
+      chantierVue = null;
+      chargerChantiers();
+    });
+    corps.append(retour);
+
+    corps.append(balise('p', 'chantier-objectif', c.nom || c.objectif));
+    if (c.objectif && c.objectif !== c.nom) corps.append(balise('p', 'panneau-note', c.objectif));
+    if (c.projet) corps.append(balise('p', 'chantier-projet', `Projet : ${c.projet}`));
+
+    const etat = balise('span', 'chantier-etat');
+    etat.textContent = c.etat === 'termine' ? 'Terminé' : 'En cours';
+    etat.classList.add(c.etat === 'termine' ? 'validee' : 'encours');
+    corps.append(etat);
+
+    const liste = balise('div', 'mission-taches');
+    (c.etapes || []).forEach((e, i) => {
+      const item = balise('div', 'chantier-etape');
+      const tete = balise('div', 'chantier-etape-tete');
+      tete.append(balise('b', '', `${i + 1}. ${e.pole || ''} — ${e.prenom}`));
+      tete.append(badgeEtape(e.etat));
+      item.append(tete);
+      item.append(balise('p', 'mission-consigne', texteLisible(e.consigne || '')));
+      if (e.branche) item.append(balise('p', 'panneau-note', `Branche : ${e.branche}`));
+      liste.append(item);
+    });
+    corps.append(liste);
+
+    const actions = balise('div', 'mission-pied');
+    const enAttente = (c.etapes || []).some((e) => e.etat === 'en_attente');
+    const enCours = (c.etapes || []).some((e) => e.etat === 'en_cours');
+    const aValider = (c.etapes || []).some((e) => e.etat === 'a_valider');
+    const note = balise('p', 'panneau-note');
+
+    if (enAttente && !enCours) {
+      const lancer = bouton('Lancer l\'étape suivante', 'petit-bouton petit-fort');
+      lancer.addEventListener('click', async () => {
+        lancer.disabled = true;
+        try {
+          await appel(`/api/chantier/${c.id}/lancer`, {});
+          notifier({ titre: 'Étape lancée', texte: 'L\'agent du pôle se met au travail.', accent: '#4f8f5d' });
+          chargerChantiers();
+        } catch (err) {
+          note.textContent = texteLisible(String(err.message || ''));
+          lancer.disabled = false;
+        }
+      });
+      actions.append(lancer);
+    }
+    if (aValider) {
+      const valider = bouton('Valider et passer au suivant', 'petit-bouton petit-fort');
+      valider.addEventListener('click', async () => {
+        valider.disabled = true;
+        try {
+          await appel(`/api/chantier/${c.id}/valider`, {});
+          notifier({ titre: 'Étape validée', texte: 'Le chantier passe au pôle suivant.', accent: '#4f8f5d' });
+          chargerChantiers();
+        } catch (err) {
+          note.textContent = texteLisible(String(err.message || ''));
+          valider.disabled = false;
+        }
+      });
+      actions.append(valider);
+    }
+    if (c.etat === 'termine') {
+      note.textContent = 'Chantier terminé — toutes les étapes sont validées.';
+    }
+    actions.append(note);
+    corps.append(actions);
+  }
+
+  async function chargerChantiers() {
+    vider();
+    if (chantierVue) {
+      corps.append(balise('p', 'panneau-note', 'Lecture du chantier...'));
+      let c;
+      try {
+        c = await appel(`/api/chantier/${chantierVue}`);
+      } catch {
+        chantierVue = null;
+        chargerChantiers();
+        return;
+      }
+      if (ouvert !== 'chantiers') return;
+      dessinerChantierDetail(c);
+      return;
+    }
+
+    corps.append(balise('p', 'panneau-note', 'Lecture des chantiers...'));
+    let donnees;
+    try {
+      donnees = await appel('/api/chantiers');
+    } catch {
+      if (ouvert === 'chantiers') corps.children[0].textContent = 'Serveur indisponible.';
+      return;
+    }
+    if (ouvert !== 'chantiers') return;
+    vider();
+
+    corps.append(
+      balise('p', 'panneau-intro', 'Un chantier = un projet découpé en étapes que les pôles se relaient pour livrer.')
+    );
+
+    const champ = balise('label', 'reunion-sujet');
+    champ.append(balise('span', 'reunion-etiquette', 'Ton idée ou ton projet'));
+    const saisie = balise('textarea', 'mission-saisie');
+    saisie.rows = 2;
+    saisie.maxLength = 3000;
+    saisie.placeholder = 'Ex. Livrer le site vitrine et le paiement pour le client X';
+    champ.append(saisie);
+    corps.append(champ);
+
+    const champProjet = balise('label', 'reunion-sujet');
+    champProjet.append(balise('span', 'reunion-etiquette', 'Projet concerné dans ~/dev (facultatif)'));
+    const saisieProjet = document.createElement('input');
+    saisieProjet.type = 'text';
+    saisieProjet.className = 'reunion-saisie';
+    saisieProjet.placeholder = 'Ex. juice_site';
+    saisieProjet.maxLength = 80;
+    champProjet.append(saisieProjet);
+    corps.append(champProjet);
+
+    const creer = bouton('Créer le chantier', 'petit-bouton petit-fort');
+    const note = balise('p', 'panneau-note');
+    corps.append(creer, note);
+
+    creer.addEventListener('click', async () => {
+      const idee = saisie.value.trim();
+      if (!idee) {
+        note.textContent = 'Décris ton idée.';
+        return;
+      }
+      creer.disabled = true;
+      note.textContent = 'LePrince découpe le chantier...';
+      try {
+        const res = await appel('/api/chantier', { idee, projet: saisieProjet.value.trim() });
+        notifier({ titre: 'Chantier créé', texte: `${res.etapes.length} étapes réparties sur les pôles.`, accent: '#4f8f5d' });
+        chantierVue = res.id;
+        chargerChantiers();
+      } catch (err) {
+        note.textContent = texteLisible(String(err.message || ''));
+        creer.disabled = false;
+      }
+    });
+
+    const chantiersListe = Array.isArray(donnees.chantiers) ? donnees.chantiers : [];
+    corps.append(balise('p', 'panneau-section', `Chantiers (${chantiersListe.length})`));
+    if (!chantiersListe.length) {
+      corps.append(balise('p', 'panneau-vide', 'Aucun chantier pour l\'instant.'));
+    } else {
+      const liste = balise('div', 'chantiers-liste');
+      for (const c of chantiersListe) {
+        const ligne = balise('div', 'chantier-ligne');
+        const nom = balise('b', 'chantier-nom', c.nom || c.objectif);
+        const finies = (c.etapes || []).filter((e) => e.etat === 'validee').length;
+        const info = balise('span', 'chantier-info', `${finies}/${(c.etapes || []).length} étapes`);
+        const badge = balise('span', 'chantier-etat');
+        badge.textContent = c.etat === 'termine' ? 'Terminé' : 'En cours';
+        badge.classList.add(c.etat === 'termine' ? 'validee' : 'encours');
+        const ouvrir = bouton('Ouvrir');
+        ouvrir.addEventListener('click', () => {
+          chantierVue = c.id;
+          chargerChantiers();
+        });
+        ligne.append(nom, info, badge, ouvrir);
+        liste.append(ligne);
+      }
+      corps.append(liste);
     }
   }
 
@@ -820,6 +1215,8 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
     if (ouvert === 'poles') dessinerPoles();
     else if (ouvert === 'equipe') dessinerEquipe();
     else if (ouvert === 'reunion') dessinerReunion();
+    else if (ouvert === 'mission') dessinerMission();
+    else if (ouvert === 'chantiers') chargerChantiers();
     else if (ouvert === 'ia') chargerIA();
     else if (ouvert === 'projets') chargerProjets();
     else if (ouvert === 'taches') chargerTaches();
@@ -829,6 +1226,7 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
     if (!ouvert) return;
     if (ouvert === 'equipe') majEquipe();
     else if (ouvert === 'reunion') majReunion();
+    else if (ouvert === 'chantiers' && chantierVue) chargerChantiers();
     else if (ouvert === 'taches') chargerTaches();
   }
 

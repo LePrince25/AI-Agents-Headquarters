@@ -2002,6 +2002,24 @@ body.premiere.souris-libre #scene { cursor: crosshair; }
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
+.fichiers li.fichier-ligne { cursor: pointer; }
+.fichiers li.fichier-ligne:hover { background: rgba(176, 129, 69, .1); border-color: rgba(176, 129, 69, .3); }
+.fichier-contenu {
+  margin: 0;
+  max-height: 42vh;
+  overflow: auto;
+  padding: 11px 13px;
+  background: #fbf7ef;
+  border: 1px solid var(--ligne);
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+
 .fenetre-boutons {
   display: flex;
   flex-wrap: wrap;
@@ -2060,4 +2078,163 @@ body.fenetre .indice { display: none; }
   .reunion-liste { grid-template-columns: 1fr; max-height: 210px; }
   .reunion-presents { grid-template-columns: 1fr; }
   .toasts { right: 10px; bottom: 66px; }
+}
+
+/* Mission */
+.mission-saisie {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--ink);
+  background: #fffdf7;
+  border: 1px solid rgba(59, 56, 47, .15);
+  border-radius: 8px;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.mission-saisie:focus {
+  outline: none;
+  border-color: #b08145;
+  box-shadow: 0 0 0 2px rgba(176, 129, 69, .18);
+}
+.mission-zone { margin-top: 12px; }
+.mission-plan { display: flex; flex-direction: column; gap: 10px; }
+.mission-objectif {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 650;
+  color: #8a6a3c;
+}
+.mission-taches { display: flex; flex-direction: column; gap: 6px; }
+.mission-tache {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  padding: 9px 11px;
+  border: 1px solid var(--ligne);
+  border-radius: 11px;
+  background: #fffdf7;
+  cursor: pointer;
+}
+.mission-tache input { margin-top: 3px; flex: none; }
+.mission-texte { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mission-texte b { font-size: 11.5px; font-weight: 680; }
+.mission-pole { font-size: 9px; color: var(--ink-doux); }
+.mission-consigne { margin: 0; font-size: 10.5px; line-height: 1.45; color: var(--ink-doux); }
+.mission-pied { display: flex; align-items: center; gap: 10px; }
+.mission-pied .panneau-note { margin: 0; }
+
+/* Chantiers */
+.chantier-objectif {
+  margin: 10px 0 2px;
+  font-size: 13px;
+  font-weight: 680;
+  color: var(--ink);
+}
+.chantier-projet { margin: 0 0 6px; font-size: 10px; color: var(--ink-doux); }
+.chantier-etat,
+.etape-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.chantier-etat.encours, .etape-badge.encours { background: rgba(176, 129, 69, .14); color: #8a5f2c; }
+.chantier-etat.validee, .etape-badge.validee { background: rgba(79, 143, 93, .13); color: #3f744b; }
+.etape-badge.attente { background: rgba(125, 115, 98, .12); color: #6b6356; }
+.etape-badge.avalider { background: rgba(95, 138, 154, .14); color: #38646f; }
+.chantier-etape {
+  padding: 9px 11px;
+  border: 1px solid var(--ligne);
+  border-radius: 11px;
+  background: #fffdf7;
+}
+.chantier-etape-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.chantier-etape-tete b { font-size: 11.5px; font-weight: 680; }
+.chantiers-liste { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.chantier-ligne {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 1px solid var(--ligne);
+  border-radius: 11px;
+  background: #fffdf7;
+}
+.chantier-nom {
+  flex: 1;
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 680;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chantier-info { font-size: 9px; color: var(--ink-doux); white-space: nowrap; }
+
+.texte-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  max-height: 32vh;
+  overflow-y: auto;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.texte-agent p { margin: 0; }
+
+/* Fiche équipe */
+.equipe-fiche {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ligne);
+  border-radius: 11px;
+  background: #fffdf7;
+}
+.equipe-fiche-nom { font-size: 12px; font-weight: 680; }
+.equipe-fiche-poste { display: block; margin: 2px 0 6px; font-size: 10px; color: var(--ink-doux); }
+.equipe-fiche h4 { margin: 8px 0 3px; font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #8a7355; }
+.equipe-fiche-mission { margin: 0 0 3px; font-size: 10.5px; line-height: 1.45; color: var(--ink-doux); }
+.equipe-fiche-outils { margin: 0; font-size: 10px; line-height: 1.45; color: var(--ink-doux); }
+
+/* Fichiers de tâche (onglet Tâches) */
+.tache-fichiers { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.tache-fichier {
+  padding: 3px 8px;
+  border: 1px solid var(--ligne);
+  border-radius: 999px;
+  background: #fffdf7;
+  color: var(--ink);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+}
+.tache-fichier:hover { border-color: #b08145; background: rgba(176, 129, 69, .08); }
+.tache-apercu {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  max-height: 40vh;
+  overflow: auto;
+  background: #fbf7ef;
+  border: 1px solid var(--ligne);
+  border-radius: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
 }

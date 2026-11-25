@@ -9,17 +9,17 @@ services:
       HOTE: 0.0.0.0
       PROJETS_DIR: /projets
       # Chemins cotes Mac, donnes au pont qui ouvre le Finder.
-      HOTE_PROJETS: /Users/leprince/dev
-      HOTE_APP: /Users/leprince/dev/pole
+      HOTE_PROJETS: /Users/adevou/dev
+      HOTE_APP: /Users/adevou/dev/pole
       # Le pont Mac (node live/pont-mac.js) confirme chaque ouverture du Finder.
       PONT_MAC: http://host.docker.internal:4174
     volumes:
       # Le QG lui-meme : les travaux et reglages restent sur le Mac.
       - .:/app
       # Tous les projets du dossier dev, en lecture et ecriture.
-      - /Users/leprince/dev:/projets
+      - /Users/adevou/dev:/projets
       # Identifiants des IA : kimi les lit directement,
       # claude devra se reconnecter une fois (stockage macOS en trousseau).
-      - /Users/leprince/.claude.json:/home/node/.claude.json
-      - /Users/leprince/.claude:/home/node/.claude
-      - /Users/leprince/.kimi-code:/home/node/.kimi-code
+      - /Users/adevou/.claude.json:/home/node/.claude.json
+      - /Users/adevou/.claude:/home/node/.claude
+      - /Users/adevou/.kimi-code:/home/node/.kimi-code

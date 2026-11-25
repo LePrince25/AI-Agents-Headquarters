@@ -395,6 +395,17 @@ async function demarrer() {
       }
       if (mode === 'premiere') avis = { texte: titre, reste: 4.5 };
     },
+    onDelegation: (resultat) => {
+      const n = (resultat.lancees || []).length;
+      if (panneaux) {
+        panneaux.notifier({
+          titre: 'LePrince a délégué',
+          texte: `${n} tâche${n > 1 ? 's' : ''} confiée${n > 1 ? 's' : ''} aux agents spécialisés.`,
+          accent: '#4f8f5d',
+          action: { label: 'Voir les tâches', faire: () => panneaux.ouvrir('taches') },
+        });
+      }
+    },
   });
 
   vie = creerVie({
@@ -450,6 +461,7 @@ async function demarrer() {
     vie,
     rencontre,
     voirLieu: voirLieuPanneau,
+    voirAgent,
     entrerLieu: entrerLieuPanneau,
     voirTache: voirTachePanneau,
   });
@@ -576,6 +588,15 @@ function voirLieuPanneau(id) {
 function entrerLieuPanneau(id) {
   if (mode !== 'ile' || vol) return;
   entrerDans(id);
+}
+
+function voirAgent(nom) {
+  if (mode !== 'ile' || vol) return;
+  const a = agentsMonde.find((x) => x.nom === nom);
+  if (!a) return;
+  const centre = new THREE.Vector3(a.pos.x, 1.6, a.pos.z);
+  const camPos = centre.clone().add(new THREE.Vector3(5.5, 3.2, 5.5));
+  volerVers(camPos, centre);
 }
 
 function voirTachePanneau(nom) {
