@@ -690,18 +690,19 @@ function construireParvis(g, colliders, portes, modeles) {
   // Allée centrale en pierre claire
   g.add(planTexture(6.4, 16.4, 0xf1e9d8, texturePierre(), 0, 0.05, -23.4, { roughness: 0.78 }));
 
-  // Véhicules
+  // Véhicules : la berline noire à calandre or est la voiture de direction.
   const places = [
     { type: 'sport', couleur: 0x6d7277, x: -21, z: -22.5 },
     { type: 'berline', couleur: 0xf0eee8, x: -15.5, z: -22.5 },
-    { type: 'suite', couleur: 0x2d3136, x: -10, z: -22.5 },
+    { type: 'suv', couleur: 0x0a0b0d, finition: 'or', x: -10, z: -22.5 },
     { type: 'berline', couleur: 0x21384f, x: 10, z: -22.5 },
     { type: 'suv', couleur: 0xf2f0ea, x: 15.5, z: -22.5 },
   ];
   for (const p of places) {
     const v = voiture({
-      type: p.type === 'suite' ? 'coupe' : p.type,
+      type: p.type,
       couleur: p.couleur,
+      finition: p.finition,
       x: p.x,
       z: p.z,
       rot: -PI / 2,
