@@ -4,7 +4,7 @@ import { agentProcedural, POSTES, PLACES } from './agents.js';
 import { poser } from './models.js';
 import { decorerBureau, decorerPavillon, decorerQG, decorerAtelier } from './decor.js';
 import { porteDouble } from './portes.js';
-import { POLES, DIRECTION, RAYON_POLES, ATELIER_OUTILS } from './data.js';
+import { POLES, DIRECTION, ATELIER_OUTILS } from './data.js';
 
 const W = 10.6;
 const D = 8.6;
@@ -223,11 +223,10 @@ function meubleSignature(spec, g, modeles) {
 
 function pavillon(spec, index, modeles, ile) {
   const g = new THREE.Group();
-  const a = (spec.angle * PI) / 180;
-  const x = Math.cos(a) * RAYON_POLES;
-  const z = Math.sin(a) * RAYON_POLES;
+  const x = spec.x;
+  const z = spec.z;
   g.position.set(x, 0, z);
-  g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+  g.rotation.y = Math.atan2(-x, -z);
 
   g.add(box(W + 1.1, 0.34, D + 1.1, C.dalle, 0, 0.17, 0, { roughness: 0.94 }));
   g.add(planTexture(W - 0.4, D - 0.4, spec.sol, texturePlancher(), 0, SOL, 0, { roughness: 0.92 }));
@@ -492,9 +491,8 @@ export function construireDirection(ile, modeles) {
 
 export function construireAtelierOutils(ile, modeles) {
   const g = new THREE.Group();
-  const a = (ATELIER_OUTILS.angle * PI) / 180;
-  g.position.set(Math.cos(a) * ATELIER_OUTILS.rayon, 0, Math.sin(a) * ATELIER_OUTILS.rayon);
-  g.rotation.y = Math.atan2(-Math.cos(a), -Math.sin(a));
+  g.position.set(ATELIER_OUTILS.x, 0, ATELIER_OUTILS.z);
+  g.rotation.y = Math.atan2(-ATELIER_OUTILS.x, -ATELIER_OUTILS.z);
 
   const w = 6.4;
   const d = 4.6;

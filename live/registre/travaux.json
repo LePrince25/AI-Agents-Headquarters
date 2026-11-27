@@ -43,5 +43,73 @@
       ],
       "modifies": []
     }
+  },
+  {
+    "id": "92a599d6-cd37-4cc8-986f-221a012a5c63",
+    "nom": "Lior d'Almeida",
+    "prenom": "Lior",
+    "poste": "Développeur Connecteurs",
+    "pole": "Pôle API",
+    "projet": "",
+    "branche": "",
+    "dossier": "live/travaux/lior",
+    "consigne": "Implémenter le paiement du produit X avec le prestataire retenu, la création des commandes et les confirmations de transaction ; livrer un checkout testable de bout en bout.",
+    "rapport": "",
+    "etat": "erreur",
+    "debut": 1795629247163,
+    "fin": 1795629829680,
+    "cout": 2.119502,
+    "fichiers": {
+      "crees": [
+        "compte-rendu.md"
+      ],
+      "modifies": []
+    }
+  },
+  {
+    "id": "e356f6e8-b699-43cd-8c36-eba7913e12ce",
+    "nom": "Émilie Kponou",
+    "prenom": "Émilie",
+    "poste": "E-commerce & Contenu",
+    "pole": "Pôle Sites Vitrines",
+    "projet": "",
+    "branche": "",
+    "dossier": "live/travaux/emilie",
+    "consigne": "Définir l’offre, les prix, les arguments de vente et le parcours panier-paiement ; livrer les contenus et le wireframe checkout prêts à intégrer.",
+    "rapport": "",
+    "etat": "erreur",
+    "debut": 1795629247143,
+    "fin": 1795629841306,
+    "cout": 2.01333,
+    "fichiers": {
+      "crees": [
+        "ARGUMENTS-DE-VENTE.md",
+        "OFFRE-ET-PRIX.md",
+        "compte-rendu.md"
+      ],
+      "modifies": []
+    }
+  },
+  {
+    "id": "f45419f1-df79-422f-ad9f-e1497b63b27f",
+    "nom": "Iris Sossou",
+    "prenom": "Iris",
+    "poste": "Intégrations & Webhooks",
+    "pole": "Pôle API",
+    "projet": "",
+    "branche": "",
+    "dossier": "live/travaux/iris",
+    "consigne": "Sécuriser les callbacks de paiement avec validation, signature HMAC, fenêtrage anti-rejeu et idempotence ; livrer les tests de régression des flux authorized, paid et rejected.",
+    "rapport": "",
+    "etat": "erreur",
+    "debut": 1795629247182,
+    "fin": 1795630148154,
+    "cout": 0,
+    "fichiers": {
+      "crees": [
+        "compte-rendu.md"
+      ],
+      "modifies": []
+    }
   }
 ]

@@ -327,7 +327,7 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
         balise(
           'p',
           'panneau-intro',
-          'Donne un sujet, coche les agents, puis siffle la réunion. Ils marcheront jusqu\'à la table de LePrince WorkLand.'
+          'Donne un sujet, coche les agents, puis siffle la réunion. Ils se retrouvent dans la salle du conseil, au RDC de la tour.'
         )
       );
       const champSujet = balise('label', 'reunion-sujet');
@@ -469,7 +469,7 @@ export function creerPanneaux({ lieux, agents, vie, rencontre, voirLieu, entrerL
       fermer();
     });
     corps.append(fin);
-    ajouterNote('La réunion se tient à la grande table de LePrince WorkLand. Tu peux la suivre depuis la vue d\'en haut.');
+    ajouterNote('La réunion se tient dans la salle du conseil, au RDC de la tour. Les agents y sont assis sans quitter leur poste.');
   }
 
   function majReunion() {

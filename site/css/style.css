@@ -2238,3 +2238,163 @@ body.fenetre .indice { display: none; }
   word-break: break-word;
   color: var(--ink);
 }
+
+/* --- Tour : HUD d'étage --- */
+.hud-marche-ligne {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+}
+
+.hud-marche-ligne b { margin-top: 0; }
+
+.marche-etage {
+  flex: none;
+  padding: 2px 8px 3px;
+  border: 1px solid rgba(176, 129, 69, .45);
+  border-radius: 999px;
+  background: rgba(176, 129, 69, .12);
+  color: #7d5a2c;
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* --- Ascenseur --- */
+.ascenseur {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(24, 20, 15, .58);
+  backdrop-filter: blur(7px);
+}
+
+.ascenseur[hidden] { display: none; }
+
+.ascenseur-boite {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+  background: rgba(251, 246, 234, .98);
+  border: 1px solid var(--ligne);
+  border-radius: 20px;
+  box-shadow: 0 30px 80px rgba(20, 16, 10, .5);
+  overflow: hidden;
+  animation: panneauMonte .2s ease;
+}
+
+.ascenseur-tete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 16px 12px 20px;
+  border-bottom: 1px solid var(--ligne);
+}
+
+.ascenseur-sur {
+  display: block;
+  font-size: 9px;
+  font-weight: 680;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-doux);
+}
+
+.ascenseur-tete h2 {
+  margin: 3px 0 0;
+  font-size: 19px;
+  font-weight: 720;
+  letter-spacing: -.015em;
+}
+
+.ascenseur-etages {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px 16px;
+  overflow-y: auto;
+}
+
+.ascenseur-etage {
+  display: block;
+  padding: 9px 11px 10px;
+  text-align: left;
+  border: 1px solid var(--ligne);
+  border-left: 4px solid var(--accent, #b08145);
+  border-radius: 12px;
+  background: #fffdf7;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+
+.ascenseur-etage:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(70, 58, 38, .16);
+}
+
+.ascenseur-etage.actif {
+  background: rgba(176, 129, 69, .12);
+  border-color: rgba(176, 129, 69, .5);
+}
+
+.ascenseur-etage b {
+  display: block;
+  font-size: 10px;
+  font-weight: 720;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-doux);
+}
+
+.ascenseur-etage span {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 680;
+  line-height: 1.2;
+}
+
+.ascenseur-etage em {
+  display: block;
+  margin-top: 3px;
+  font-size: 9.5px;
+  font-style: normal;
+  line-height: 1.35;
+  color: var(--ink-doux);
+}
+
+.ascenseur-note {
+  margin: 0;
+  padding: 0 20px 15px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--ink-doux);
+}
+
+/* --- Fondu entre étages --- */
+.voile-etage {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  background: #100d09;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease;
+}
+
+.voile-etage.actif { opacity: 1; }
+
+@media (max-width: 620px) {
+  .ascenseur-etages { grid-template-columns: 1fr; }
+}

@@ -7,7 +7,7 @@ export const ETATS = {
 export const RAYON_ILE = 35;
 export const RAYON_POLES = 20.5;
 export const TERRASSE = { x: 0, z: 27.2 };
-export const ATELIER_OUTILS = { angle: 258, rayon: 27.2 };
+export const ATELIER_OUTILS = { x: 21, z: 13 };
 
 export const DIRECTION = {
   id: 'direction',
@@ -18,12 +18,23 @@ export const DIRECTION = {
   agent: { nom: 'LePrince Dziedjom', poste: 'Directeur Général', etat: 'travail' },
 };
 
+export const SIEGE = {
+  id: 'siege',
+  pole: 'Siège Social',
+  lieu: 'LePrince Headquarters',
+  accent: '#b08145',
+  mission: 'Tour de 10 niveaux : accueil, direction et un étage par pôle',
+  agents: [],
+};
+
 export const POLES = [
   {
     id: 'api',
+    etage: 1,
     pole: 'Pôle API',
     lieu: 'La Forge',
-    angle: -90,
+    x: -21,
+    z: -13,
     accent: '#4f8b86',
     kind: 'forge',
     sol: 0xe7dcc6,
@@ -37,9 +48,11 @@ export const POLES = [
   },
   {
     id: 'vitrines',
+    etage: 2,
     pole: 'Sites Vitrines',
     lieu: "L'Atelier Owl",
-    angle: -50,
+    x: -7,
+    z: -13,
     accent: '#c9763f',
     kind: 'atelier',
     sol: 0xead9c2,
@@ -52,9 +65,11 @@ export const POLES = [
   },
   {
     id: 'mobiles',
+    etage: 3,
     pole: 'Apps Mobiles',
     lieu: "L'Usine Mobile",
-    angle: -10,
+    x: 7,
+    z: -13,
     accent: '#c2a04a',
     kind: 'mobile',
     sol: 0xe9dcc8,
@@ -67,9 +82,11 @@ export const POLES = [
   },
   {
     id: 'saas',
+    etage: 4,
     pole: 'SAAS & CRM',
     lieu: 'Le Comptoir',
-    angle: 30,
+    x: 21,
+    z: -13,
     accent: '#8d9a4c',
     kind: 'comptoir',
     sol: 0xe6dcc3,
@@ -83,9 +100,11 @@ export const POLES = [
   },
   {
     id: 'cyber',
+    etage: 5,
     pole: 'CyberSécurité',
     lieu: 'Le Bastion',
-    angle: 70,
+    x: -21,
+    z: 0,
     accent: '#a65a4f',
     kind: 'bastion',
     sol: 0xe7d8c4,
@@ -99,9 +118,11 @@ export const POLES = [
   },
   {
     id: 'veille',
+    etage: 6,
     pole: 'Veille & R&D',
     lieu: 'La Vigie',
-    angle: 110,
+    x: -21,
+    z: 13,
     accent: '#6f8f5f',
     kind: 'vigie',
     sol: 0xe8ddc6,
@@ -114,9 +135,11 @@ export const POLES = [
   },
   {
     id: 'ops',
+    etage: 7,
     pole: 'Ops & Clients',
     lieu: 'Le Bureau',
-    angle: 150,
+    x: 21,
+    z: 0,
     accent: '#b08145',
     kind: 'bureau',
     sol: 0xe9dbc2,
@@ -129,9 +152,11 @@ export const POLES = [
   },
   {
     id: 'data',
+    etage: 8,
     pole: 'Data & IA',
     lieu: "L'Observatoire",
-    angle: 190,
+    x: -7,
+    z: 13,
     accent: '#5f8a9a',
     kind: 'data',
     sol: 0xe4dcc9,
@@ -144,9 +169,11 @@ export const POLES = [
   },
   {
     id: 'bi',
+    etage: 9,
     pole: 'Business Intelligence',
     lieu: "L'Observatoire",
-    angle: 230,
+    x: 7,
+    z: 13,
     accent: '#8a8095',
     kind: 'bi',
     sol: 0xe5dbc9,

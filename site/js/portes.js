@@ -43,6 +43,41 @@ export function porteDouble(parent, { centreX = 0, z, largeur, hauteur, sol, tei
   return { pivots, collider, x: centreX, z, ouvert: false };
 }
 
+// Porte de bureau à un seul battant, vitrée, montée sur charnière à gauche.
+// `cote` négatif pour ouvrir vers l'intérieur de la pièce.
+export function porteSimple(parent, { centreX = 0, z, largeur = 1.02, hauteur = 2.22, sol, teinte = 0x2a2d31 }) {
+  const pivot = new THREE.Group();
+  pivot.position.set(centreX - largeur / 2, sol, z);
+  parent.add(pivot);
+
+  const panneau = new THREE.Group();
+  panneau.position.x = largeur / 2;
+  pivot.add(panneau);
+
+  panneau.add(box(0.07, hauteur, 0.06, teinte, -largeur / 2 + 0.035, hauteur / 2, 0, { roughness: 0.55, metalness: 0.25 }));
+  panneau.add(box(0.07, hauteur, 0.06, teinte, largeur / 2 - 0.035, hauteur / 2, 0, { roughness: 0.55, metalness: 0.25 }));
+  panneau.add(box(largeur, 0.09, 0.06, teinte, 0, hauteur - 0.045, 0, { roughness: 0.55, metalness: 0.25 }));
+  panneau.add(box(largeur, 0.16, 0.06, teinte, 0, 0.08, 0, { roughness: 0.55, metalness: 0.25 }));
+
+  const vitre = box(largeur - 0.14, hauteur - 0.3, 0.018, C.verre, 0, hauteur / 2 + 0.02, 0, {
+    transparent: true,
+    opacity: 0.3,
+    roughness: 0.12,
+    metalness: 0,
+    depthWrite: false,
+  });
+  vitre.castShadow = false;
+  panneau.add(vitre);
+
+  panneau.add(cyl(0.017, 0.017, 0.24, C.metal, largeur / 2 - 0.12, hauteur * 0.5, 0.06, 8, {
+    roughness: 0.3,
+    metalness: 0.6,
+  }));
+
+  const collider = { x: centreX, z, hw: largeur / 2, hd: 0.08 };
+  return { pivots: [{ pivot, cote: -1, angle: 0, cible: 0 }], collider, x: centreX, z, ouvert: false, simple: true };
+}
+
 export function animerPortes(portes, dt) {
   for (const porte of portes) {
     for (const p of porte.pivots) {

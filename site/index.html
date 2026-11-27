@@ -27,14 +27,14 @@
     <h1>LePrince WorkLand</h1>
   </div>
   <span class="badge">9 pôles - 30 agents</span>
-  <p>Clique un pôle pour entrer directement dedans</p>
+  <p>Clique la tour pour entrer. Un pôle par étage, ascenseur au centre.</p>
 </header>
 
 <div class="hud-droite">
   <div class="hud-stats">
     <div><b>9</b>pôles</div>
     <div><b>30</b>agents</div>
-    <div><b>9</b>lieux</div>
+    <div><b>10</b>étages</div>
   </div>
   <button id="entrer" class="bouton bouton-fort" type="button" disabled>J'entre</button>
   <button id="retour" class="bouton" type="button">Vue d'en haut</button>
@@ -42,8 +42,11 @@
 
 <div id="hud-marche" class="hud-marche">
   <span class="hud-marche-pole" id="marche-pole"></span>
-  <b id="marche-lieu"></b>
-  <p>ZQSD ou flèches pour marcher - souris pour regarder - E pour parler aux agents ou ouvrir les portes - Échap libère la souris</p>
+  <div class="hud-marche-ligne">
+    <b id="marche-lieu"></b>
+    <span id="marche-etage" class="marche-etage">RDC</span>
+  </div>
+  <p>ZQSD ou flèches pour marcher - souris pour regarder - E pour parler, ouvrir une porte ou prendre l'ascenseur - 0 à 9 pour choisir l'étage - Échap libère la souris</p>
 </div>
 
 <div id="viseur" class="viseur"></div>
@@ -90,6 +93,22 @@
 </section>
 
 <div id="toasts" class="toasts" aria-live="polite"></div>
+
+<div id="ascenseur" class="ascenseur" hidden aria-live="polite">
+  <section class="ascenseur-boite" role="dialog" aria-modal="true" aria-labelledby="ascenseur-titre">
+    <header class="ascenseur-tete">
+      <div>
+        <span class="ascenseur-sur">Ascenseur central</span>
+        <h2 id="ascenseur-titre">Choisis ton étage</h2>
+      </div>
+      <button id="ascenseur-fermer" class="panneau-fermer" type="button" aria-label="Fermer">×</button>
+    </header>
+    <div id="ascenseur-etages" class="ascenseur-etages"></div>
+    <p class="ascenseur-note">Touche 0 pour le RDC, 1 à 9 pour un pôle. Le plan de l'étage est affiché à côté de l'ascenseur.</p>
+  </section>
+</div>
+
+<div id="voile-etage" class="voile-etage"></div>
 
 <div id="fenetre-agent" class="fenetre" role="dialog" aria-modal="true" aria-labelledby="fa-titre" hidden>
   <div class="fenetre-fond" id="fa-fond"></div>

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { materiauSurface, projeterUV, surfacePourCouleur, tuileSurface } from './rendu.js';
 
 export const PI = Math.PI;
 export const TAU = PI * 2;
@@ -41,7 +42,10 @@ export const C = {
 const cacheMats = new Map();
 
 export function mat(color, opts = {}) {
-  const cle = color + '|' + JSON.stringify(opts);
+  const reste = { ...opts };
+  delete reste.surface;
+  delete reste.tuile;
+  const cle = color + '|' + JSON.stringify(reste);
   if (!cacheMats.has(cle)) {
     cacheMats.set(
       cle,
@@ -50,31 +54,66 @@ export function mat(color, opts = {}) {
         roughness: 0.86,
         metalness: 0,
         envMapIntensity: 0.45,
-        ...opts,
+        ...reste,
       })
     );
   }
   return cacheMats.get(cle);
 }
 
-export function box(w, h, d, color, x = 0, y = 0, z = 0, opts) {
-  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color, opts));
+// Les helpers acceptent un matériau à la place d'une couleur : on récupère sa
+// teinte et ses réglages, puis on repasse par la bibliothèque de surfaces pour
+// que le volume reçoive enfin une vraie matière au lieu d'un aplat blanc.
+function lireCouleur(valeur, opts) {
+  if (!valeur?.isMaterial) return { couleur: valeur, opts };
+  return {
+    couleur: valeur.color.getHex(),
+    opts: { roughness: valeur.roughness, metalness: valeur.metalness, ...opts },
+  };
+}
+
+function surfaceDe(couleur, opts) {
+  if (opts.surface === false) return null;
+  return opts.surface || surfacePourCouleur(couleur);
+}
+
+function materiauDe(surface, couleur, opts) {
+  if (!surface) return mat(couleur, opts);
+  return materiauSurface(surface, couleur, opts) || mat(couleur, opts);
+}
+
+function preparerGeometrie(geo, surface, opts) {
+  if (surface) projeterUV(geo, opts.tuile || tuileSurface(surface));
+  return geo;
+}
+
+export function box(w, h, d, color, x = 0, y = 0, z = 0, opts = {}) {
+  const spec = lireCouleur(color, opts);
+  const surface = surfaceDe(spec.couleur, spec.opts);
+  const geo = preparerGeometrie(new THREE.BoxGeometry(w, h, d), surface, spec.opts);
+  const m = new THREE.Mesh(geo, materiauDe(surface, spec.couleur, spec.opts));
   m.position.set(x, y, z);
   m.castShadow = true;
   m.receiveShadow = true;
   return m;
 }
 
-export function cyl(rt, rb, h, color, x = 0, y = 0, z = 0, seg = 16, opts) {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat(color, opts));
+export function cyl(rt, rb, h, color, x = 0, y = 0, z = 0, seg = 16, opts = {}) {
+  const spec = lireCouleur(color, opts);
+  const surface = surfaceDe(spec.couleur, spec.opts);
+  const geo = preparerGeometrie(new THREE.CylinderGeometry(rt, rb, h, seg), surface, spec.opts);
+  const m = new THREE.Mesh(geo, materiauDe(surface, spec.couleur, spec.opts));
   m.position.set(x, y, z);
   m.castShadow = true;
   m.receiveShadow = true;
   return m;
 }
 
-export function plan(w, d, color, x = 0, y = 0, z = 0, opts) {
-  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(color, opts));
+export function plan(w, d, color, x = 0, y = 0, z = 0, opts = {}) {
+  const spec = lireCouleur(color, opts);
+  const surface = surfaceDe(spec.couleur, spec.opts);
+  const geo = preparerGeometrie(new THREE.PlaneGeometry(w, d), surface, spec.opts);
+  const m = new THREE.Mesh(geo, materiauDe(surface, spec.couleur, spec.opts));
   m.rotation.x = -PI / 2;
   m.position.set(x, y, z);
   m.receiveShadow = true;
